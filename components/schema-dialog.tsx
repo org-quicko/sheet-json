@@ -206,21 +206,51 @@ export function SchemaDialog() {
     }
   }
 
-  const exportSchema = () => {
+  const exportSchema = async () => {
     const schema = generateJsonSchema()
     if (schema) {
-      const blob = new Blob([JSON.stringify(schema, null, 2)], {
-        type: "application/json",
-      })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `${schema.properties.name.enum[0] || "schema"}.json`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      const jsonString = JSON.stringify(schema, null, 2)
+      const fileName = `${schema.properties.name.enum[0] || "schema"}.json`
+
+      // Check if the File System Access API is available
+      if ("showSaveFilePicker" in window) {
+        try {
+          const fileHandle = await window.showSaveFilePicker({
+            suggestedName: fileName,
+            types: [
+              {
+                description: "JSON Files",
+                accept: { "application/json": [".json"] },
+              },
+            ],
+          })
+
+          const writable = await fileHandle.createWritable()
+          await writable.write(jsonString)
+          await writable.close()
+        } catch (err) {
+          // User cancelled or API failed, fall back to download
+          console.error("File System Access API failed:", err)
+          downloadFile(jsonString, fileName)
+        }
+      } else {
+        // Fall back to traditional download if File System Access API is not available
+        downloadFile(jsonString, fileName)
+      }
     }
+  }
+
+  // Helper function for traditional file download
+  const downloadFile = (content: string, fileName: string) => {
+    const blob = new Blob([content], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = fileName
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   const schema = generateJsonSchema()

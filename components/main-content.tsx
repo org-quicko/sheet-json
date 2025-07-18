@@ -144,6 +144,20 @@ export function MainContent() {
 
   // No sheet selected - show all blocks from all sheets
   if (!activeSheet) {
+    // Check if workbook has no sheets at all
+    if (activeWorkbook.sheets.length === 0) {
+      return (
+        <div className="h-full flex flex-col">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No sheets yet</h3>
+              <p className="text-gray-500">Create your first sheet to start building your schema</p>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
     const allBlocks = activeWorkbook.sheets.flatMap((sheet) =>
       sheet.blocks.map((block) => ({ ...block, sheetName: sheet.name, sheetId: sheet.id })),
     )
@@ -411,7 +425,7 @@ export function MainContent() {
                       ) : (
                         <Table className="w-4 h-4 mr-2 text-green-500" />
                       )}
-                      <h3 className="font-medium truncate">{block.name}</h3>
+                      <h3 className="font-medium break-words min-w-0 max-w-[15vw]">{block.name}</h3>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Button

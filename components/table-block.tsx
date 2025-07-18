@@ -5,6 +5,7 @@ import { Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FieldConfigDialog } from "./field-config-dialog"
 import type { TableBlock, TableHeader as TableHeaderType } from "@/types/schema"
 
@@ -42,10 +43,6 @@ export function TableBlockComponent({ block, onUpdate, onDelete }: TableBlockCom
     onUpdate({
       ...block,
       headers: block.headers.filter((header) => header.id !== headerId),
-      rows: block.rows.map((row) => ({
-        ...row,
-        cells: Object.fromEntries(Object.entries(row.cells).filter(([key]) => key !== headerId)),
-      })),
     })
   }
 
@@ -88,7 +85,7 @@ export function TableBlockComponent({ block, onUpdate, onDelete }: TableBlockCom
           </div>
         ) : (
           block.headers.map((header) => (
-            <div key={header.id} className="p-4 border rounded-lg space-y-3 bg-white shadow-sm">
+            <div key={header.id} className="w-[75%] p-4 border rounded-lg space-y-3 bg-white shadow-sm">
               <div className="flex items-center space-x-2">
                 <Input
                   placeholder="Column name"
@@ -96,6 +93,19 @@ export function TableBlockComponent({ block, onUpdate, onDelete }: TableBlockCom
                   onChange={(e) => updateHeader(header.id, { name: e.target.value })}
                   className="flex-1"
                 />
+                <Select value={header.type} onValueChange={(value) => updateHeader(header.id, { type: value })}>
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="string">String</SelectItem>
+                    <SelectItem value="number">Number</SelectItem>
+                    <SelectItem value="integer">Integer</SelectItem>
+                    <SelectItem value="boolean">Boolean</SelectItem>
+                    <SelectItem value="object">Object</SelectItem>
+                    <SelectItem value="array">Array</SelectItem>
+                  </SelectContent>
+                </Select>
                 <FieldConfigDialog
                   field={header}
                   onSave={(updatedField) => updateHeader(header.id, updatedField as TableHeaderType)}
@@ -104,36 +114,6 @@ export function TableBlockComponent({ block, onUpdate, onDelete }: TableBlockCom
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
-
-              <div className="flex items-center space-x-2 flex-wrap">
-                <Badge className={getTypeColor(header.type)}>{header.type}</Badge>
-                {header.format && <Badge className={getFormatColor(header.format)}>{header.format}</Badge>}
-                {header.nullAllowed && <Badge variant="outline">Nullable</Badge>}
-                {header.enum && header.enum.length > 0 && (
-                  <Badge variant="secondary">Enum: {header.enum.join(", ")}</Badge>
-                )}
-                {header.pattern && <Badge variant="secondary">Pattern</Badge>}
-                {(header.minLength || header.maxLength) && (
-                  <Badge variant="secondary">
-                    Length: {header.minLength || 0}-{header.maxLength || "∞"}
-                  </Badge>
-                )}
-                {(header.minimum !== undefined || header.maximum !== undefined) && (
-                  <Badge variant="secondary">
-                    Range: {header.minimum !== undefined ? (header.format === "BigDecimal" ? "0.0" : "0") : header.minimum } to{" "}
-                    {header.maximum !== undefined ? header.maximum : "∞"}
-                  </Badge>
-                )}
-              </div>
-
-              {header.description && <p className="text-sm text-gray-600">{header.description}</p>}
-
-              {header.examples && header.examples.length > 0 && (
-                <div className="text-sm">
-                  <span className="text-gray-500">Examples: </span>
-                  <span className="font-mono text-xs bg-gray-100 px-1 rounded">{header.examples.join(", ")}</span>
-                </div>
-              )}
             </div>
           ))
         )}

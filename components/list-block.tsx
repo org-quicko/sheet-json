@@ -5,6 +5,7 @@ import { Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FieldConfigDialog } from "./field-config-dialog"
 import type { ListBlock, KeyValuePair } from "@/types/schema"
 
@@ -85,7 +86,7 @@ export function ListBlockComponent({ block, onUpdate, onDelete }: ListBlockCompo
           </div>
         ) : (
           block.items.map((item) => (
-            <div key={item.id} className="p-4 border rounded-lg space-y-3 bg-white shadow-sm">
+            <div key={item.id} className="w-[75%] p-4 border rounded-lg space-y-3 bg-white shadow-sm">
               <div className="flex items-center space-x-2">
                 <Input
                   placeholder="Field name"
@@ -93,6 +94,19 @@ export function ListBlockComponent({ block, onUpdate, onDelete }: ListBlockCompo
                   onChange={(e) => updateItem(item.id, { key: e.target.value })}
                   className="flex-1"
                 />
+                <Select value={item.type} onValueChange={(value) => updateItem(item.id, { type: value })}>
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="string">String</SelectItem>
+                    <SelectItem value="number">Number</SelectItem>
+                    <SelectItem value="integer">Integer</SelectItem>
+                    <SelectItem value="boolean">Boolean</SelectItem>
+                    <SelectItem value="object">Object</SelectItem>
+                    <SelectItem value="array">Array</SelectItem>
+                  </SelectContent>
+                </Select>
                 <FieldConfigDialog
                   field={item}
                   onSave={(updatedField) => updateItem(item.id, updatedField as KeyValuePair)}
@@ -101,34 +115,6 @@ export function ListBlockComponent({ block, onUpdate, onDelete }: ListBlockCompo
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
-
-              <div className="flex items-center space-x-2 flex-wrap">
-                <Badge className={getTypeColor(item.type)}>{item.type}</Badge>
-                {item.format && <Badge className={getFormatColor(item.format)}>{item.format}</Badge>}
-                {item.nullAllowed && <Badge variant="outline">Nullable</Badge>}
-                {item.enum && item.enum.length > 0 && <Badge variant="secondary">Enum: {item.enum.join(", ")}</Badge>}
-                {item.pattern && <Badge variant="secondary">Pattern</Badge>}
-                {(item.minLength || item.maxLength) && (
-                  <Badge variant="secondary">
-                    Length: {item.minLength || 0}-{item.maxLength || "∞"}
-                  </Badge>
-                )}
-                {(item.minimum !== undefined || item.maximum !== undefined) && (
-                  <Badge variant="secondary">
-                    Range: {item.minimum !== undefined ? item.minimum : (item.format === "BigDecimal" ? "0.0" : "0")} to{" "}
-                    {item.maximum !== undefined ? item.maximum : "∞"}
-                  </Badge>
-                )}
-              </div>
-
-              {item.description && <p className="text-sm text-gray-600">{item.description}</p>}
-
-              {item.examples && item.examples.length > 0 && (
-                <div className="text-sm">
-                  <span className="text-gray-500">Examples: </span>
-                  <span className="font-mono text-xs bg-gray-100 px-1 rounded">{item.examples.join(", ")}</span>
-                </div>
-              )}
             </div>
           ))
         )}

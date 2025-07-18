@@ -36,6 +36,7 @@ export function Sidebar() {
     activeBlockId,
     createWorkbook,
     deleteWorkbook,
+    updateWorkbook,
     setActiveWorkbook,
     createSheet,
     deleteSheet,
@@ -58,6 +59,21 @@ export function Sidebar() {
   const [editingBlock, setEditingBlock] = useState<string | null>(null)
   const [editingBlockName, setEditingBlockName] = useState("")
   const [copied, setCopied] = useState(false)
+
+  const [isEditWorkbookDialogOpen, setIsEditWorkbookDialogOpen] = useState(false)
+  const [isDeleteWorkbookDialogOpen, setIsDeleteWorkbookDialogOpen] = useState(false)
+  const [isDeleteSheetDialogOpen, setIsDeleteSheetDialogOpen] = useState(false)
+  const [isDeleteBlockDialogOpen, setIsDeleteBlockDialogOpen] = useState(false)
+  const [editingWorkbookName, setEditingWorkbookName] = useState("")
+  const [deletingSheet, setDeletingSheet] = useState<{ workbookId: string; sheetId: string; sheetName: string } | null>(
+    null,
+  )
+  const [deletingBlock, setDeletingBlock] = useState<{
+    workbookId: string
+    sheetId: string
+    blockId: string
+    blockName: string
+  } | null>(null)
 
   const activeWorkbook = workbooks.find((wb) => wb.id === activeWorkbookId)
 
@@ -88,9 +104,40 @@ export function Sidebar() {
   }
 
   const handleDeleteWorkbook = () => {
+    setIsDeleteWorkbookDialogOpen(true)
+  }
+
+  const confirmDeleteWorkbook = () => {
     if (activeWorkbookId) {
       deleteWorkbook(activeWorkbookId)
     }
+    setIsDeleteWorkbookDialogOpen(false)
+  }
+
+  const handleDeleteSheet = (workbookId: string, sheetId: string, sheetName: string) => {
+    setDeletingSheet({ workbookId, sheetId, sheetName })
+    setIsDeleteSheetDialogOpen(true)
+  }
+
+  const confirmDeleteSheet = () => {
+    if (deletingSheet) {
+      deleteSheet(deletingSheet.workbookId, deletingSheet.sheetId)
+    }
+    setIsDeleteSheetDialogOpen(false)
+    setDeletingSheet(null)
+  }
+
+  const handleDeleteBlock = (workbookId: string, sheetId: string, blockId: string, blockName: string) => {
+    setDeletingBlock({ workbookId, sheetId, blockId, blockName })
+    setIsDeleteBlockDialogOpen(true)
+  }
+
+  const confirmDeleteBlock = () => {
+    if (deletingBlock) {
+      deleteBlock(deletingBlock.workbookId, deletingBlock.sheetId, deletingBlock.blockId)
+    }
+    setIsDeleteBlockDialogOpen(false)
+    setDeletingBlock(null)
   }
 
   // Generate JSON Schema
@@ -274,18 +321,47 @@ export function Sidebar() {
     return schema
   }
 
-  const handleExportSchema = () => {
+  const handleExportSchema = async () => {
     const schema = generateJsonSchema()
     if (!schema) return
 
-    // Export the schema
-    const blob = new Blob([JSON.stringify(schema, null, 2)], {
-      type: "application/json",
-    })
+    const jsonString = JSON.stringify(schema, null, 2)
+    const fileName = `${activeWorkbook?.name || "schema"}.json`
+
+    // Check if the File System Access API is available
+    if ("showSaveFilePicker" in window) {
+      try {
+        const fileHandle = await window.showSaveFilePicker({
+          suggestedName: fileName,
+          types: [
+            {
+              description: "JSON Files",
+              accept: { "application/json": [".json"] },
+            },
+          ],
+        })
+
+        const writable = await fileHandle.createWritable()
+        await writable.write(jsonString)
+        await writable.close()
+      } catch (err) {
+        // User cancelled or API failed, fall back to download
+        console.error("File System Access API failed:", err)
+        downloadFile(jsonString, fileName)
+      }
+    } else {
+      // Fall back to traditional download if File System Access API is not available
+      downloadFile(jsonString, fileName)
+    }
+  }
+
+  // Helper function for traditional file download
+  const downloadFile = (content: string, fileName: string) => {
+    const blob = new Blob([content], { type: "application/json" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `${activeWorkbook?.name || "schema"}.json`
+    a.download = fileName
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -305,20 +381,37 @@ export function Sidebar() {
     }
   }
 
-  const exportSchemaFromDialog = () => {
+  const exportSchemaFromDialog = async () => {
     const schema = generateJsonSchema()
     if (schema) {
-      const blob = new Blob([JSON.stringify(schema, null, 2)], {
-        type: "application/json",
-      })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `${schema.properties.name.enum[0] || "schema"}.json`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      const jsonString = JSON.stringify(schema, null, 2)
+      const fileName = `${schema.properties.name.enum[0] || "schema"}.json`
+
+      // Check if the File System Access API is available
+      if ("showSaveFilePicker" in window) {
+        try {
+          const fileHandle = await window.showSaveFilePicker({
+            suggestedName: fileName,
+            types: [
+              {
+                description: "JSON Files",
+                accept: { "application/json": [".json"] },
+              },
+            ],
+          })
+
+          const writable = await fileHandle.createWritable()
+          await writable.write(jsonString)
+          await writable.close()
+        } catch (err) {
+          // User cancelled or API failed, fall back to download
+          console.error("File System Access API failed:", err)
+          downloadFile(jsonString, fileName)
+        }
+      } else {
+        // Fall back to traditional download if File System Access API is not available
+        downloadFile(jsonString, fileName)
+      }
     }
   }
 
@@ -362,12 +455,17 @@ export function Sidebar() {
 
   const handleEditWorkbookName = () => {
     if (activeWorkbook) {
-      const newName = prompt("Enter new workbook name:", activeWorkbook.name)
-      if (newName && newName.trim()) {
-        // Assuming updateWorkbook is added to the store actions
-        // updateWorkbook(activeWorkbook.id, { name: newName.trim() })
-      }
+      setEditingWorkbookName(activeWorkbook.name)
+      setIsEditWorkbookDialogOpen(true)
     }
+  }
+
+  const saveWorkbookName = () => {
+    if (editingWorkbookName.trim() && activeWorkbook) {
+      updateWorkbook(activeWorkbook.id, { name: editingWorkbookName.trim() })
+    }
+    setIsEditWorkbookDialogOpen(false)
+    setEditingWorkbookName("")
   }
 
   const schema = generateJsonSchema()
@@ -379,7 +477,7 @@ export function Sidebar() {
         {/* Data Model Section */}
         <div className="space-y-3">
           <div className="flex items-center space-x-2">
-            <h2 className="text-xl font-bold">Sheet Schema Builder</h2>
+            <h2 className="text-xl font-bold">Workbooks</h2>
           </div>
 
           {/* Workbook Dropdown */}
@@ -522,6 +620,115 @@ export function Sidebar() {
               </DialogContent>
             </Dialog>
 
+            {/* Edit Workbook Dialog */}
+            <Dialog open={isEditWorkbookDialogOpen} onOpenChange={setIsEditWorkbookDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Workbook Name</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Input
+                    placeholder="Workbook name"
+                    value={editingWorkbookName}
+                    onChange={(e) => setEditingWorkbookName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && saveWorkbookName()}
+                  />
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsEditWorkbookDialogOpen(false)
+                        setEditingWorkbookName("")
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={saveWorkbookName}>Save</Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Delete Workbook Confirmation Dialog */}
+            <Dialog open={isDeleteWorkbookDialogOpen} onOpenChange={setIsDeleteWorkbookDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete Workbook</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    Are you sure you want to delete the workbook "{activeWorkbook?.name}"? This action cannot be undone.
+                  </p>
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" onClick={() => setIsDeleteWorkbookDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button variant="destructive" onClick={confirmDeleteWorkbook}>
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Delete Sheet Confirmation Dialog */}
+            <Dialog open={isDeleteSheetDialogOpen} onOpenChange={setIsDeleteSheetDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete Sheet</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    Are you sure you want to delete the sheet "{deletingSheet?.sheetName}"? This action cannot be
+                    undone.
+                  </p>
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsDeleteSheetDialogOpen(false)
+                        setDeletingSheet(null)
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button variant="destructive" onClick={confirmDeleteSheet}>
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Delete Block Confirmation Dialog */}
+            <Dialog open={isDeleteBlockDialogOpen} onOpenChange={setIsDeleteBlockDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete Block</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    Are you sure you want to delete the block "{deletingBlock?.blockName}"? This action cannot be
+                    undone.
+                  </p>
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsDeleteBlockDialogOpen(false)
+                        setDeletingBlock(null)
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button variant="destructive" onClick={confirmDeleteBlock}>
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
             {/* Edit Workbook Name */}
             <Button
               size="sm"
@@ -628,7 +835,7 @@ export function Sidebar() {
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation()
-                            deleteSheet(activeWorkbook.id, sheet.id)
+                            handleDeleteSheet(activeWorkbook.id, sheet.id, sheet.name)
                           }}
                           className="text-red-600"
                         >
@@ -726,7 +933,7 @@ export function Sidebar() {
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  deleteBlock(activeWorkbook.id, sheet.id, block.id)
+                                  handleDeleteBlock(activeWorkbook.id, sheet.id, block.id, block.name)
                                 }}
                                 className="text-red-600"
                               >

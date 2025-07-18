@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'Sheet tools',
+  description: 'A collection of utilities for interacting with sheet-json',
   generator: 'v0.dev',
 }
 
