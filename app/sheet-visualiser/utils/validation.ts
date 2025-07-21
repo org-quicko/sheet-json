@@ -88,7 +88,7 @@ export function getFieldSchema(
 
   // Find block schema by name
   const blockSchema = sheetSchema.properties.blocks.items.oneOf.find(
-    (b: any) => b.properties.name?.enum?.[0] === blockName,
+    (b: any) => b.properties?.name?.enum?.[0] === blockName,
   )
   if (!blockSchema) return null
 
@@ -234,6 +234,7 @@ export function validateCell(value: any, fieldSchema: FieldSchema, row: number, 
   // Pattern validation
   if (fieldSchema.pattern) {
     try {
+      
       const regex = new RegExp(fieldSchema.pattern)
       if (!regex.test(stringValue)) {
         return {

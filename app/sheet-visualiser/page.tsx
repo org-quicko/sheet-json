@@ -18,7 +18,6 @@ import {
   ChevronRight,
   ChevronDown,
   Database,
-  Plus,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -605,7 +604,7 @@ export default function SheetVisualizerPage() {
                                     </div>
                                     <Badge variant="secondary" className="text-xs">
                                       {block["@entity"] === "table"
-                                        ? `${block.header?.length || 0} cols`
+                                        ? `${block.rows?.length || 0} rows`
                                         : `${block.items?.length || 0} items`}
                                     </Badge>
                                   </div>
@@ -624,7 +623,7 @@ export default function SheetVisualizerPage() {
                 <div className="text-center text-gray-500">
                   <FileSpreadsheet className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                   <p className="text-sm mb-3">No data imported</p>
-                  <Button size="sm" variant="outline" onClick={() => setIsImportDialogOpen(true)}>
+                  <Button size="sm" variant="outline" onClick={() => setIsDataDialogOpen(true)}>
                     <Upload className="w-3 h-3 mr-1" />
                     Import Data
                   </Button>
@@ -663,28 +662,28 @@ export default function SheetVisualizerPage() {
                   </div>
                   <div className="flex items-center space-x-2">
                     {currentBlock["@entity"] === "table" && workbookSchema && (
-                    <AddDataDialog
-                      currentBlock={currentBlock}
-                      currentSheetName={currentSheet?.name || ""}
-                      workbookSchema={workbookSchema}
-                      onAddData={(newRowData) => {
-                        if (!workbookData) return
+                      <AddDataDialog
+                        currentBlock={currentBlock}
+                        currentSheetName={currentSheet?.name || ""}
+                        workbookSchema={workbookSchema}
+                        onAddData={(newRowData) => {
+                          if (!workbookData) return
 
-                        const newData = { ...workbookData }
-                        const sheet = newData.sheets[activeSheetIndex]
-                        const block = sheet.blocks[activeBlockIndex]
+                          const newData = { ...workbookData }
+                          const sheet = newData.sheets[activeSheetIndex]
+                          const block = sheet.blocks[activeBlockIndex]
 
-                        if (block["@entity"] === "table") {
-                          if (!block.rows) block.rows = []
-                          block.rows.push(newRowData)
-                        } else if (block["@entity"] === "list") {
-                          if (!block.items) block.items = []
-                          block.items.push(newRowData)
-                        }
+                          if (block["@entity"] === "table") {
+                            if (!block.rows) block.rows = []
+                            block.rows.push(newRowData)
+                          } else if (block["@entity"] === "list") {
+                            if (!block.items) block.items = []
+                            block.items.push(newRowData)
+                          }
 
-                        setWorkbookData(newData)
-                      }}
-                    />
+                          setWorkbookData(newData)
+                        }}
+                      />
                     )}
                   </div>
                 </div>
