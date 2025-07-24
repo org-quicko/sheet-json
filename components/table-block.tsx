@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
-import { Plus, Trash2 } from "lucide-react"
+import type React from "react"
+
+import { useState, useRef, useCallback } from "react"
+import { Plus, Trash2, GripVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FieldConfigDialog } from "./field-config-dialog"
 import type { TableBlock, TableHeader as TableHeaderType } from "@/types/schema"
@@ -18,6 +19,10 @@ interface TableBlockComponentProps {
 export function TableBlockComponent({ block, onUpdate, onDelete }: TableBlockComponentProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editingName, setEditingName] = useState(block.name)
+  const [draggedHeader, setDraggedHeader] = useState<string | null>(null)
+  const [dragOverHeader, setDragOverHeader] = useState<string | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const autoScrollRef = useRef<NodeJS.Timeout | null>(null)
 
   const addHeader = () => {
     const newHeader: TableHeaderType = {
@@ -46,6 +51,96 @@ export function TableBlockComponent({ block, onUpdate, onDelete }: TableBlockCom
     })
   }
 
+  const reorderHeaders = (draggedId: string, targetId: string) => {
+    const draggedIndex = block.headers.findIndex((header) => header.id === draggedId)
+    const targetIndex = block.headers.findIndex((header) => header.id === targetId)
+
+    if (draggedIndex === -1 || targetIndex === -1) return
+
+    const newHeaders = [...block.headers]
+    const [draggedHeader] = newHeaders.splice(draggedIndex, 1)
+    newHeaders.splice(targetIndex, 0, draggedHeader)
+
+    onUpdate({
+      ...block,
+      headers: newHeaders,
+    })
+  }
+
+  const handleAutoScroll = useCallback((clientY: number) => {
+    if (!containerRef.current) return
+
+    const container = containerRef.current
+    const rect = container.getBoundingClientRect()
+    const scrollThreshold = 50
+    const scrollSpeed = 10
+
+    if (autoScrollRef.current) {
+      clearInterval(autoScrollRef.current)
+      autoScrollRef.current = null
+    }
+
+    if (clientY - rect.top < scrollThreshold) {
+      // Scroll up
+      autoScrollRef.current = setInterval(() => {
+        container.scrollTop = Math.max(0, container.scrollTop - scrollSpeed)
+      }, 16)
+    } else if (rect.bottom - clientY < scrollThreshold) {
+      // Scroll down
+      autoScrollRef.current = setInterval(() => {
+        const maxScroll = container.scrollHeight - container.clientHeight
+        container.scrollTop = Math.min(maxScroll, container.scrollTop + scrollSpeed)
+      }, 16)
+    }
+  }, [])
+
+  const stopAutoScroll = useCallback(() => {
+    if (autoScrollRef.current) {
+      clearInterval(autoScrollRef.current)
+      autoScrollRef.current = null
+    }
+  }, [])
+
+  const handleDragStart = (e: React.DragEvent, headerId: string) => {
+    setDraggedHeader(headerId)
+    e.dataTransfer.effectAllowed = "move"
+    e.dataTransfer.setData("text/plain", headerId)
+  }
+
+  const handleDragOver = (e: React.DragEvent, headerId: string) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+    setDragOverHeader(headerId)
+    handleAutoScroll(e.clientY)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear drag over if we're leaving the container entirely
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDragOverHeader(null)
+      stopAutoScroll()
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault()
+    stopAutoScroll()
+
+    const draggedId = e.dataTransfer.getData("text/plain")
+    if (draggedId && draggedId !== targetId) {
+      reorderHeaders(draggedId, targetId)
+    }
+
+    setDraggedHeader(null)
+    setDragOverHeader(null)
+  }
+
+  const handleDragEnd = () => {
+    stopAutoScroll()
+    setDraggedHeader(null)
+    setDragOverHeader(null)
+  }
+
   const saveName = () => {
     onUpdate({ ...block, name: editingName })
     setIsEditing(false)
@@ -72,7 +167,7 @@ export function TableBlockComponent({ block, onUpdate, onDelete }: TableBlockCom
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={containerRef}>
       {/* Headers */}
       <div className="space-y-3">
         {block.headers.length === 0 ? (
@@ -85,8 +180,22 @@ export function TableBlockComponent({ block, onUpdate, onDelete }: TableBlockCom
           </div>
         ) : (
           block.headers.map((header) => (
-            <div key={header.id} className="w-[75%] p-4 border rounded-lg space-y-3 bg-white shadow-sm">
+            <div
+              key={header.id}
+              className={`w-[75%] p-4 border rounded-lg space-y-3 bg-white shadow-sm transition-all duration-200 ${
+                draggedHeader === header.id ? "opacity-50 scale-95" : ""
+              } ${dragOverHeader === header.id ? "border-blue-500 bg-blue-50" : ""}`}
+              draggable
+              onDragStart={(e) => handleDragStart(e, header.id)}
+              onDragOver={(e) => handleDragOver(e, header.id)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, header.id)}
+              onDragEnd={handleDragEnd}
+            >
               <div className="flex items-center space-x-2">
+                <div className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded">
+                  <GripVertical className="w-4 h-4 text-gray-400" />
+                </div>
                 <Input
                   placeholder="Column name"
                   value={header.name}
