@@ -1,5 +1,3 @@
-"use client"
-
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import type { Workbook, Sheet, Block } from "@/types/schema"
@@ -12,21 +10,28 @@ interface SchemaStore {
 
   // Workbook actions
   createWorkbook: (name: string) => void
-  updateWorkbook: (workbookId: string, updates: Partial<Workbook>) => void
   deleteWorkbook: (workbookId: string) => void
+  updateWorkbook: (workbookId: string, updates: Partial<Workbook>) => void
   setActiveWorkbook: (workbookId: string) => void
 
   // Sheet actions
   createSheet: (workbookId: string, name: string) => void
-  updateSheet: (workbookId: string, sheetId: string, updates: Partial<Sheet>) => void
   deleteSheet: (workbookId: string, sheetId: string) => void
+  updateSheet: (workbookId: string, sheetId: string, updates: Partial<Sheet>) => void
   setActiveSheet: (sheetId: string) => void
+  copySheet: (workbookId: string, sheetId: string) => void
+  reorderSheets: (workbookId: string, fromIndex: number, toIndex: number) => void
 
   // Block actions
   createBlock: (workbookId: string, sheetId: string, block: Block) => void
   updateBlock: (workbookId: string, sheetId: string, block: Block) => void
   deleteBlock: (workbookId: string, sheetId: string, blockId: string) => void
   setActiveBlock: (blockId: string) => void
+  copyBlock: (workbookId: string, sheetId: string, blockId: string) => void
+  reorderBlocks: (workbookId: string, sheetId: string, fromIndex: number, toIndex: number) => void
+
+  // Import/Export
+  importWorkbook: (workbook: Workbook) => void
 }
 
 export const useSchemaStore = create<SchemaStore>()(
@@ -49,18 +54,18 @@ export const useSchemaStore = create<SchemaStore>()(
         }))
       },
 
-      updateWorkbook: (workbookId: string, updates: Partial<Workbook>) => {
-        set((state) => ({
-          workbooks: state.workbooks.map((wb) => (wb.id === workbookId ? { ...wb, ...updates } : wb)),
-        }))
-      },
-
       deleteWorkbook: (workbookId: string) => {
         set((state) => ({
           workbooks: state.workbooks.filter((wb) => wb.id !== workbookId),
           activeWorkbookId: state.activeWorkbookId === workbookId ? null : state.activeWorkbookId,
           activeSheetId: state.activeWorkbookId === workbookId ? null : state.activeSheetId,
           activeBlockId: state.activeWorkbookId === workbookId ? null : state.activeBlockId,
+        }))
+      },
+
+      updateWorkbook: (workbookId: string, updates: Partial<Workbook>) => {
+        set((state) => ({
+          workbooks: state.workbooks.map((wb) => (wb.id === workbookId ? { ...wb, ...updates } : wb)),
         }))
       },
 
@@ -79,7 +84,16 @@ export const useSchemaStore = create<SchemaStore>()(
             wb.id === workbookId ? { ...wb, sheets: [...wb.sheets, newSheet] } : wb,
           ),
           activeSheetId: newSheet.id,
-          activeBlockId: null,
+        }))
+      },
+
+      deleteSheet: (workbookId: string, sheetId: string) => {
+        set((state) => ({
+          workbooks: state.workbooks.map((wb) =>
+            wb.id === workbookId ? { ...wb, sheets: wb.sheets.filter((sheet) => sheet.id !== sheetId) } : wb,
+          ),
+          activeSheetId: state.activeSheetId === sheetId ? null : state.activeSheetId,
+          activeBlockId: state.activeSheetId === sheetId ? null : state.activeBlockId,
         }))
       },
 
@@ -96,18 +110,46 @@ export const useSchemaStore = create<SchemaStore>()(
         }))
       },
 
-      deleteSheet: (workbookId: string, sheetId: string) => {
-        set((state) => ({
-          workbooks: state.workbooks.map((wb) =>
-            wb.id === workbookId ? { ...wb, sheets: wb.sheets.filter((sheet) => sheet.id !== sheetId) } : wb,
-          ),
-          activeSheetId: state.activeSheetId === sheetId ? null : state.activeSheetId,
-          activeBlockId: state.activeSheetId === sheetId ? null : state.activeBlockId,
-        }))
-      },
-
       setActiveSheet: (sheetId: string) => {
         set({ activeSheetId: sheetId, activeBlockId: null })
+      },
+
+      copySheet: (workbookId: string, sheetId: string) => {
+        const state = get()
+        const workbook = state.workbooks.find((wb) => wb.id === workbookId)
+        const sheet = workbook?.sheets.find((s) => s.id === sheetId)
+
+        if (sheet) {
+          const copiedSheet: Sheet = {
+            ...sheet,
+            id: Date.now().toString(),
+            name: `${sheet.name} (Copy)`,
+            blocks: sheet.blocks.map((block) => ({
+              ...block,
+              id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            })),
+          }
+
+          set((state) => ({
+            workbooks: state.workbooks.map((wb) =>
+              wb.id === workbookId ? { ...wb, sheets: [...wb.sheets, copiedSheet] } : wb,
+            ),
+          }))
+        }
+      },
+
+      reorderSheets: (workbookId: string, fromIndex: number, toIndex: number) => {
+        set((state) => ({
+          workbooks: state.workbooks.map((wb) => {
+            if (wb.id === workbookId) {
+              const newSheets = [...wb.sheets]
+              const [movedSheet] = newSheets.splice(fromIndex, 1)
+              newSheets.splice(toIndex, 0, movedSheet)
+              return { ...wb, sheets: newSheets }
+            }
+            return wb
+          }),
+        }))
       },
 
       createBlock: (workbookId: string, sheetId: string, block: Block) => {
@@ -122,7 +164,6 @@ export const useSchemaStore = create<SchemaStore>()(
                 }
               : wb,
           ),
-          activeBlockId: block.id,
         }))
       },
 
@@ -154,7 +195,10 @@ export const useSchemaStore = create<SchemaStore>()(
                   ...wb,
                   sheets: wb.sheets.map((sheet) =>
                     sheet.id === sheetId
-                      ? { ...sheet, blocks: sheet.blocks.filter((block) => block.id !== blockId) }
+                      ? {
+                          ...sheet,
+                          blocks: sheet.blocks.filter((block) => block.id !== blockId),
+                        }
                       : sheet,
                   ),
                 }
@@ -167,9 +211,66 @@ export const useSchemaStore = create<SchemaStore>()(
       setActiveBlock: (blockId: string) => {
         set({ activeBlockId: blockId })
       },
+
+      copyBlock: (workbookId: string, sheetId: string, blockId: string) => {
+        const state = get()
+        const workbook = state.workbooks.find((wb) => wb.id === workbookId)
+        const sheet = workbook?.sheets.find((s) => s.id === sheetId)
+        const block = sheet?.blocks.find((b) => b.id === blockId)
+
+        if (block) {
+          const copiedBlock: Block = {
+            ...block,
+            id: Date.now().toString(),
+            name: `${block.name} (Copy)`,
+          }
+
+          set((state) => ({
+            workbooks: state.workbooks.map((wb) =>
+              wb.id === workbookId
+                ? {
+                    ...wb,
+                    sheets: wb.sheets.map((sheet) =>
+                      sheet.id === sheetId ? { ...sheet, blocks: [...sheet.blocks, copiedBlock] } : sheet,
+                    ),
+                  }
+                : wb,
+            ),
+          }))
+        }
+      },
+
+      reorderBlocks: (workbookId: string, sheetId: string, fromIndex: number, toIndex: number) => {
+        set((state) => ({
+          workbooks: state.workbooks.map((wb) => {
+            if (wb.id === workbookId) {
+              return {
+                ...wb,
+                sheets: wb.sheets.map((sheet) => {
+                  if (sheet.id === sheetId) {
+                    const newBlocks = [...sheet.blocks]
+                    const [movedBlock] = newBlocks.splice(fromIndex, 1)
+                    newBlocks.splice(toIndex, 0, movedBlock)
+                    return { ...sheet, blocks: newBlocks }
+                  }
+                  return sheet
+                }),
+              }
+            }
+            return wb
+          }),
+        }))
+      },
+
+      importWorkbook: (workbook: Workbook) => {
+        set((state) => ({
+          workbooks: [...state.workbooks, workbook],
+          activeWorkbookId: workbook.id,
+        }))
+      },
     }),
     {
-      name: "sheet-schema-builder-storage",
+      name: "schema-store",
     },
   ),
 )

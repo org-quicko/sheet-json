@@ -2,7 +2,6 @@
 
 import type React from "react"
 
-import { useState } from "react"
 import { Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,34 +20,19 @@ interface FieldConfigDialogProps {
 }
 
 export function FieldConfigDialog({ field, onSave, trigger }: FieldConfigDialogProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [editingField, setEditingField] = useState<KeyValuePair | TableHeader>({ ...field })
-
-  const handleSave = () => {
-    onSave(editingField)
-    setIsOpen(false)
-  }
-
   const updateField = (updates: Partial<KeyValuePair | TableHeader>) => {
-    setEditingField({ ...editingField, ...updates })
+    const updatedField = { ...field, ...updates }
+    onSave(updatedField)
   }
 
-  const fieldName = "key" in editingField ? editingField.key : editingField.name
-  const isKeyValuePair = "key" in editingField
+  const fieldName = "key" in field ? field.key : field.name
+  const isKeyValuePair = "key" in field
 
   // Check if format field should be shown (only for number and integer types)
-  const showFormatField = editingField.type === "number" || editingField.type === "integer"
-
-  // Reset editing field when dialog opens
-  const handleOpenChange = (open: boolean) => {
-    if (open) {
-      setEditingField({ ...field })
-    }
-    setIsOpen(open)
-  }
+  const showFormatField = field.type === "number" || field.type === "integer"
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog>
       <DialogTrigger asChild>
         {trigger || (
           <Button size="sm" variant="outline">
@@ -93,7 +77,7 @@ export function FieldConfigDialog({ field, onSave, trigger }: FieldConfigDialogP
               <div>
                 <Label htmlFor="type">Type</Label>
                 <Select
-                  value={editingField.type}
+                  value={field.type}
                   onValueChange={(value: any) => updateField({ type: value, format: undefined })}
                 >
                   <SelectTrigger>
@@ -114,7 +98,7 @@ export function FieldConfigDialog({ field, onSave, trigger }: FieldConfigDialogP
                 <div>
                   <Label htmlFor="format">Format</Label>
                   <Select
-                    value={editingField.format || "None"}
+                    value={field.format || "None"}
                     onValueChange={(value: any) => updateField({ format: value || undefined })}
                   >
                     <SelectTrigger>
@@ -133,7 +117,7 @@ export function FieldConfigDialog({ field, onSave, trigger }: FieldConfigDialogP
             <div className="flex items-center space-x-2">
               <Switch
                 id="nullAllowed"
-                checked={editingField.nullAllowed || false}
+                checked={field.nullAllowed || false}
                 onCheckedChange={(checked) => updateField({ nullAllowed: checked })}
               />
               <Label htmlFor="nullAllowed">Null Allowed</Label>
@@ -144,7 +128,7 @@ export function FieldConfigDialog({ field, onSave, trigger }: FieldConfigDialogP
               <Textarea
                 id="description"
                 placeholder="Field description"
-                value={editingField.description || ""}
+                value={field.description || ""}
                 onChange={(e) => updateField({ description: e.target.value })}
               />
             </div>
@@ -154,7 +138,7 @@ export function FieldConfigDialog({ field, onSave, trigger }: FieldConfigDialogP
               <Input
                 id="examples"
                 placeholder="example1, example2, example3"
-                value={editingField.examples?.join(", ") || ""}
+                value={field.examples?.join(", ") || ""}
                 onChange={(e) =>
                   updateField({
                     examples: e.target.value ? e.target.value.split(",").map((s) => s.trim()) : undefined,
@@ -167,7 +151,7 @@ export function FieldConfigDialog({ field, onSave, trigger }: FieldConfigDialogP
           <Separator />
 
           {/* String Validations */}
-          {editingField.type === "string" && (
+          {field.type === "string" && (
             <div className="space-y-4">
               <h3 className="text-lg font-medium">String Validations</h3>
 
@@ -178,7 +162,7 @@ export function FieldConfigDialog({ field, onSave, trigger }: FieldConfigDialogP
                     id="minLength"
                     type="number"
                     placeholder="0"
-                    value={editingField.minLength || ""}
+                    value={field.minLength || ""}
                     onChange={(e) =>
                       updateField({
                         minLength: e.target.value ? Number.parseInt(e.target.value) : undefined,
@@ -192,7 +176,7 @@ export function FieldConfigDialog({ field, onSave, trigger }: FieldConfigDialogP
                     id="maxLength"
                     type="number"
                     placeholder="255"
-                    value={editingField.maxLength || ""}
+                    value={field.maxLength || ""}
                     onChange={(e) =>
                       updateField({
                         maxLength: e.target.value ? Number.parseInt(e.target.value) : undefined,
@@ -207,7 +191,7 @@ export function FieldConfigDialog({ field, onSave, trigger }: FieldConfigDialogP
                 <Input
                   id="pattern"
                   placeholder="^[a-zA-Z0-9]+$"
-                  value={editingField.pattern || ""}
+                  value={field.pattern || ""}
                   onChange={(e) => updateField({ pattern: e.target.value })}
                 />
               </div>
@@ -215,7 +199,7 @@ export function FieldConfigDialog({ field, onSave, trigger }: FieldConfigDialogP
           )}
 
           {/* Number/Integer Validations */}
-          {(editingField.type === "number" || editingField.type === "integer") && (
+          {(field.type === "number" || field.type === "integer") && (
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Numeric Validations</h3>
 
@@ -226,7 +210,7 @@ export function FieldConfigDialog({ field, onSave, trigger }: FieldConfigDialogP
                     id="minimum"
                     type="number"
                     step="any"
-                    value={editingField.minimum !== undefined ? editingField.minimum.toString() : ""}
+                    value={field.minimum !== undefined ? field.minimum.toString() : ""}
                     onChange={(e) =>
                       updateField({
                         minimum: e.target.value !== "" ? Number.parseFloat(e.target.value) : undefined,
@@ -240,7 +224,7 @@ export function FieldConfigDialog({ field, onSave, trigger }: FieldConfigDialogP
                     id="maximum"
                     type="number"
                     step="any"
-                    value={editingField.maximum !== undefined ? editingField.maximum.toString() : ""}
+                    value={field.maximum !== undefined ? field.maximum.toString() : ""}
                     onChange={(e) =>
                       updateField({
                         maximum: e.target.value !== "" ? Number.parseFloat(e.target.value) : undefined,
@@ -262,7 +246,7 @@ export function FieldConfigDialog({ field, onSave, trigger }: FieldConfigDialogP
               <Input
                 id="enumValues"
                 placeholder="option1, option2, option3"
-                value={editingField.enum?.join(", ") || ""}
+                value={field.enum?.join(", ") || ""}
                 onChange={(e) =>
                   updateField({
                     enum: e.target.value ? e.target.value.split(",").map((s) => s.trim()) : undefined,
@@ -271,13 +255,6 @@ export function FieldConfigDialog({ field, onSave, trigger }: FieldConfigDialogP
               />
               <p className="text-sm text-gray-500 mt-1">Leave empty to allow any value of the specified type</p>
             </div>
-          </div>
-
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave}>Save Configuration</Button>
           </div>
         </div>
       </DialogContent>

@@ -1,7 +1,9 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
-import { Plus, List, Table, Edit2, Trash2 } from "lucide-react"
+import { Plus, List, Table, Edit2, Trash2, Copy, GripVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -21,15 +23,21 @@ export function MainContent() {
     createBlock,
     updateBlock,
     deleteBlock,
+    copyBlock,
     setActiveSheet,
     setActiveBlock,
+    reorderBlocks,
   } = useSchemaStore()
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [blockName, setBlockName] = useState("")
-  const [blockType, setBlockType] = useState<"list" | "table">("list")
+  const [blockType, setBlockType] = useState<"list" | "table">("table")
   const [editingBlock, setEditingBlock] = useState<string | null>(null)
   const [editingBlockName, setEditingBlockName] = useState("")
+
+  // Drag and drop state for list view
+  const [draggedBlock, setDraggedBlock] = useState<string | null>(null)
+  const [dragOverBlock, setDragOverBlock] = useState<string | null>(null)
 
   const activeWorkbook = workbooks.find((wb) => wb.id === activeWorkbookId)
   const activeSheet = activeWorkbook?.sheets.find((sheet) => sheet.id === activeSheetId)
@@ -85,6 +93,41 @@ export function MainContent() {
     }
     setEditingBlock(null)
     setEditingBlockName("")
+  }
+
+  // Drag and drop handlers for list view
+  const handleBlockDragStart = (e: React.DragEvent, blockId: string) => {
+    setDraggedBlock(blockId)
+    e.dataTransfer.effectAllowed = "move"
+  }
+
+  const handleBlockDragOver = (e: React.DragEvent, targetBlockId: string) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+    setDragOverBlock(targetBlockId)
+  }
+
+  const handleBlockDragLeave = () => {
+    setDragOverBlock(null)
+  }
+
+  const handleBlockDrop = (e: React.DragEvent, targetBlockId: string) => {
+    e.preventDefault()
+    if (draggedBlock && draggedBlock !== targetBlockId && activeWorkbook && activeSheet) {
+      const fromIndex = activeSheet.blocks.findIndex((b) => b.id === draggedBlock)
+      const toIndex = activeSheet.blocks.findIndex((b) => b.id === targetBlockId)
+
+      if (fromIndex !== -1 && toIndex !== -1) {
+        reorderBlocks(activeWorkbook.id, activeSheet.id, fromIndex, toIndex)
+      }
+    }
+    setDraggedBlock(null)
+    setDragOverBlock(null)
+  }
+
+  const handleBlockDragEnd = () => {
+    setDraggedBlock(null)
+    setDragOverBlock(null)
   }
 
   // Add field to current list block
@@ -194,16 +237,16 @@ export function MainContent() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="list">
-                        <div className="flex items-center">
-                          <List className="w-4 h-4 mr-2" />
-                          List (Key-Value Pairs)
-                        </div>
-                      </SelectItem>
                       <SelectItem value="table">
                         <div className="flex items-center">
                           <Table className="w-4 h-4 mr-2" />
                           Table (Rows & Headers)
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="list">
+                        <div className="flex items-center">
+                          <List className="w-4 h-4 mr-2" />
+                          List (Key-Value Pairs)
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -233,59 +276,72 @@ export function MainContent() {
               </Dialog>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-3">
               {allBlocks.map((block) => (
                 <div
                   key={block.id}
-                  className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer bg-white"
                   onClick={() => {
                     setActiveSheet(block.sheetId)
                     setActiveBlock(block.id)
                   }}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center">
-                      {block.type === "list" ? (
-                        <List className="w-4 h-4 mr-2 text-blue-500" />
-                      ) : (
-                        <Table className="w-4 h-4 mr-2 text-green-500" />
-                      )}
-                      <h3 className="font-medium truncate">{block.name}</h3>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="w-8 h-8 p-0"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setEditingBlock(block.id)
-                          setEditingBlockName(block.name)
-                        }}
-                      >
-                        <Edit2 className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="w-8 h-8 p-0 text-red-600 hover:text-red-700"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDeleteBlock(block.id)
-                        }}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-500 mb-2">Sheet: {block.sheetName}</p>
                   <div className="flex items-center justify-between">
-                    <Badge variant="secondary" className="text-xs">
-                      {block.type === "list" ? "List" : "Table"}
-                    </Badge>
-                    <span className="text-xs text-gray-400">
-                      {getBlockItemCount(block)} {block.type === "list" ? "fields" : "columns"}
-                    </span>
+                    <div className="flex items-center space-x-3">
+                      {block.type === "list" ? (
+                        <List className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                      ) : (
+                        <Table className="w-5 h-5 text-green-500 flex-shrink-0" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-medium text-gray-900 truncate">{block.name}</h3>
+                        <p className="text-sm text-gray-500">Sheet: {block.sheetName}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {block.type === "list" ? "List" : "Table"}
+                      </Badge>
+                      <span className="text-xs text-gray-400 min-w-0">
+                        {getBlockItemCount(block)} {block.type === "list" ? "fields" : "columns"}
+                      </span>
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="w-8 h-8 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditingBlock(block.id)
+                            setEditingBlockName(block.name)
+                          }}
+                        >
+                          <Edit2 className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="w-8 h-8 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            copyBlock(activeWorkbook.id, block.sheetId, block.id)
+                          }}
+                        >
+                          <Copy className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="w-8 h-8 p-0 text-red-600 hover:text-red-700"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteBlock(block.id)
+                          }}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -372,16 +428,16 @@ export function MainContent() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="list">
-                        <div className="flex items-center">
-                          <List className="w-4 h-4 mr-2" />
-                          List (Key-Value Pairs)
-                        </div>
-                      </SelectItem>
                       <SelectItem value="table">
                         <div className="flex items-center">
                           <Table className="w-4 h-4 mr-2" />
                           Table (Rows & Headers)
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="list">
+                        <div className="flex items-center">
+                          <List className="w-4 h-4 mr-2" />
+                          List (Key-Value Pairs)
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -411,21 +467,44 @@ export function MainContent() {
               </Dialog>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-3">
               {activeSheet.blocks.map((block) => (
                 <div
                   key={block.id}
-                  className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  draggable
+                  onDragStart={(e) => handleBlockDragStart(e, block.id)}
+                  onDragOver={(e) => handleBlockDragOver(e, block.id)}
+                  onDragLeave={handleBlockDragLeave}
+                  onDrop={(e) => handleBlockDrop(e, block.id)}
+                  onDragEnd={handleBlockDragEnd}
+                  className={`border rounded-lg p-4 hover:shadow-md transition-all cursor-pointer bg-white ${
+                    draggedBlock === block.id ? "opacity-50 scale-95" : ""
+                  } ${
+                    dragOverBlock === block.id && draggedBlock !== block.id
+                      ? "border-2 border-dashed border-blue-400 bg-blue-50"
+                      : ""
+                  }`}
                   onClick={() => setActiveBlock(block.id)}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <GripVertical className="w-5 h-5 text-gray-400 cursor-grab active:cursor-grabbing flex-shrink-0" />
                       {block.type === "list" ? (
-                        <List className="w-4 h-4 mr-2 text-blue-500" />
+                        <List className="w-5 h-5 text-blue-500 flex-shrink-0" />
                       ) : (
-                        <Table className="w-4 h-4 mr-2 text-green-500" />
+                        <Table className="w-5 h-5 text-green-500 flex-shrink-0" />
                       )}
-                      <h3 className="font-medium break-words min-w-0 max-w-[15vw]">{block.name}</h3>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-medium text-gray-900 truncate">{block.name}</h3>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Badge variant="secondary" className="text-xs">
+                            {block.type === "list" ? "List" : "Table"}
+                          </Badge>
+                          <span className="text-xs text-gray-400">
+                            {getBlockItemCount(block)} {block.type === "list" ? "fields" : "columns"}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Button
@@ -443,6 +522,17 @@ export function MainContent() {
                       <Button
                         size="sm"
                         variant="ghost"
+                        className="w-8 h-8 p-0"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          copyBlock(activeWorkbook.id, activeSheet.id, block.id)
+                        }}
+                      >
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         className="w-8 h-8 p-0 text-red-600 hover:text-red-700"
                         onClick={(e) => {
                           e.stopPropagation()
@@ -452,14 +542,6 @@ export function MainContent() {
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Badge variant="secondary" className="text-xs">
-                      {block.type === "list" ? "List" : "Table"}
-                    </Badge>
-                    <span className="text-xs text-gray-400">
-                      {getBlockItemCount(block)} {block.type === "list" ? "fields" : "columns"}
-                    </span>
                   </div>
                 </div>
               ))}

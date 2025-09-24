@@ -2,10 +2,9 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { Link, FileText, Download } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { Link, FileText, Upload, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
@@ -13,16 +12,31 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useSchemaStore } from "@/store/schema-store"
 import type { ListBlock, TableBlock, KeyValuePair, TableHeader } from "@/types/schema"
+import { cn } from "@/lib/utils"
 
-export function ImportSchemaDialog() {
+type ImportSchemaDialogProps = {
+  onClose?: () => void
+}
+
+export function ImportSchemaDialog({ onClose }: ImportSchemaDialogProps) {
   const { createWorkbook, createSheet, createBlock } = useSchemaStore()
-  const [isOpen, setIsOpen] = useState(false)
   const [pastedSchema, setPastedSchema] = useState("")
   const [schemaUrl, setSchemaUrl] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const event = new CustomEvent("schema-import-loading", { detail: { isLoading } })
+      window.dispatchEvent(event)
+    }
+  }, [isLoading])
 
   const parseAndImportSchema = async (schemaText: string) => {
+    setIsLoading(true)
     try {
       const schema = JSON.parse(schemaText)
 
@@ -226,12 +240,17 @@ export function ImportSchemaDialog() {
       }
 
       setError("")
-      setIsOpen(false)
+      if (onClose) {
+        onClose()
+      }
       setPastedSchema("")
       setSchemaUrl("")
+      setSelectedFile(null)
     } catch (err) {
       console.error("Import error:", err)
       setError(err instanceof Error ? err.message : "Failed to parse schema")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -243,14 +262,14 @@ export function ImportSchemaDialog() {
     parseAndImportSchema(pastedSchema)
   }
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
+  const handleFileSelect = (file: File) => {
     if (!file.name.endsWith(".json")) {
       setError("Please select a JSON file")
       return
     }
+
+    setSelectedFile(file)
+    setError("")
 
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -261,8 +280,40 @@ export function ImportSchemaDialog() {
     }
     reader.onerror = () => {
       setError("Failed to read file")
+      setIsLoading(false)
     }
     reader.readAsText(file)
+  }
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      handleFileSelect(file)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+
+    const files = Array.from(e.dataTransfer.files)
+    const jsonFile = files.find((file) => file.name.endsWith(".json"))
+
+    if (jsonFile) {
+      handleFileSelect(jsonFile)
+    } else {
+      setError("Please drop a JSON file")
+    }
   }
 
   const handleUrlImport = async () => {
@@ -289,83 +340,144 @@ export function ImportSchemaDialog() {
     }
   }
 
+  const clearSelectedFile = () => {
+    setSelectedFile(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <Download className="w-4 h-4 mr-2" />
-          Import Schema
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Import JSON Schema</DialogTitle>
-        </DialogHeader>
-
-        <Tabs defaultValue="paste" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="paste">Paste</TabsTrigger>
-            <TabsTrigger value="file">Upload File</TabsTrigger>
-            <TabsTrigger value="url">From URL</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="paste" className="space-y-4">
-            <div>
-              <Label htmlFor="schema-paste">Paste JSON Schema</Label>
-              <Textarea
-                id="schema-paste"
-                placeholder="Paste your JSON schema here..."
-                value={pastedSchema}
-                onChange={(e) => setPastedSchema(e.target.value)}
-                className="min-h-[200px] font-mono text-sm"
-              />
+    <>
+      {isLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div className="relative bg-white rounded-lg shadow-lg p-8 mx-4 max-w-sm w-full pointer-events-auto">
+            <div className="text-center space-y-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Importing Schema</h3>
+                <p className="text-sm text-gray-600 mt-1">Processing your JSON schema...</p>
+              </div>
             </div>
-            <Button onClick={handlePasteImport} className="w-full" disabled={!pastedSchema.trim()}>
-              <FileText className="w-4 h-4 mr-2" />
-              Import Schema
-            </Button>
-          </TabsContent>
+          </div>
+        </div>
+      )}
 
-          <TabsContent value="file" className="space-y-4">
-            <div>
-              <Label htmlFor="schema-file">Select JSON Schema File</Label>
-              <Input
-                id="schema-file"
+      <Tabs defaultValue="paste" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="paste">Paste</TabsTrigger>
+          <TabsTrigger value="file">Upload File</TabsTrigger>
+          <TabsTrigger value="url">From URL</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="paste" className="space-y-4">
+          <div>
+            <Label htmlFor="schema-paste">Paste JSON Schema</Label>
+            <Textarea
+              id="schema-paste"
+              placeholder="Paste your JSON schema here..."
+              value={pastedSchema}
+              onChange={(e) => setPastedSchema(e.target.value)}
+              className="min-h-[200px] font-mono text-sm"
+              disabled={isLoading}
+            />
+          </div>
+          <Button onClick={handlePasteImport} className="w-full" disabled={!pastedSchema.trim() || isLoading}>
+            <FileText className="w-4 h-4 mr-2" />
+            {isLoading ? "Importing..." : "Import Schema"}
+          </Button>
+        </TabsContent>
+
+        <TabsContent value="file" className="space-y-4">
+          <div>
+            <Label>Upload JSON Schema File</Label>
+            <div
+              className={cn(
+                "relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+                isDragOver ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400",
+                isLoading && "pointer-events-none opacity-50",
+              )}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => !isLoading && fileInputRef.current?.click()}
+            >
+              <input
+                ref={fileInputRef}
                 type="file"
                 accept=".json"
                 onChange={handleFileUpload}
-                className="cursor-pointer"
+                className="hidden"
+                disabled={isLoading}
               />
-              <p className="text-sm text-gray-500 mt-2">Select a JSON schema file from your computer</p>
-            </div>
-          </TabsContent>
 
-          <TabsContent value="url" className="space-y-4">
-            <div>
-              <Label htmlFor="schema-url">Schema URL</Label>
-              <Input
-                id="schema-url"
-                type="url"
-                placeholder="https://example.com/schema.json"
-                value={schemaUrl}
-                onChange={(e) => setSchemaUrl(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && !isLoading && schemaUrl.trim() && handleUrlImport()}
-              />
-              <p className="text-sm text-gray-500 mt-2">Enter a URL to fetch the JSON schema from</p>
+              {selectedFile ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-center space-x-2">
+                    <FileText className="w-8 h-8 text-green-600" />
+                    <div className="text-left">
+                      <p className="font-medium text-green-700">{selectedFile.name}</p>
+                      <p className="text-sm text-gray-500">{(selectedFile.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                    {!isLoading && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          clearSelectedFile()
+                        }}
+                        className="ml-2"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                  {isLoading && <p className="text-sm text-blue-600">Processing file...</p>}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <Upload className="w-12 h-12 mx-auto text-gray-400" />
+                  <div>
+                    <p className="text-lg font-medium">
+                      {isDragOver ? "Drop your JSON file here" : "Drop JSON file here or click to browse"}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {isLoading ? "Processing..." : "Supports .json files"}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-            <Button onClick={handleUrlImport} disabled={isLoading || !schemaUrl.trim()} className="w-full">
-              <Link className="w-4 h-4 mr-2" />
-              {isLoading ? "Fetching..." : "Import from URL"}
-            </Button>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </TabsContent>
 
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-      </DialogContent>
-    </Dialog>
+        <TabsContent value="url" className="space-y-4">
+          <div>
+            <Label htmlFor="schema-url">Schema URL</Label>
+            <Input
+              id="schema-url"
+              type="url"
+              placeholder="https://example.com/schema.json"
+              value={schemaUrl}
+              onChange={(e) => setSchemaUrl(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && !isLoading && schemaUrl.trim() && handleUrlImport()}
+              disabled={isLoading}
+            />
+            <p className="text-sm text-gray-500 mt-2">Enter a URL to fetch the JSON schema from</p>
+          </div>
+          <Button onClick={handleUrlImport} disabled={isLoading || !schemaUrl.trim()} className="w-full">
+            <Link className="w-4 h-4 mr-2" />
+            {isLoading ? "Fetching..." : "Import from URL"}
+          </Button>
+        </TabsContent>
+      </Tabs>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+    </>
   )
 }

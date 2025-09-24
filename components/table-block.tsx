@@ -199,7 +199,18 @@ export function TableBlockComponent({ block, onUpdate, onDelete }: TableBlockCom
                 <Input
                   placeholder="Column name"
                   value={header.name}
+                  draggable={false}
                   onChange={(e) => updateHeader(header.id, { name: e.target.value })}
+                   onDragStart={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                  }}
+                  onMouseDown={(e) => {
+                    e.stopPropagation()
+                  }}
+                  onFocus={(e) => {
+                    e.target.select()
+                  }}
                   className="flex-1"
                 />
                 <Select value={header.type} onValueChange={(value) => updateHeader(header.id, { type: value })}>

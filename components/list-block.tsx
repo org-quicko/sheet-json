@@ -203,7 +203,7 @@ export function ListBlockComponent({ block, onUpdate, onDelete }: ListBlockCompo
                   onChange={(e) => updateItem(item.id, { key: e.target.value })}
                   className="flex-1"
                 />
-                <Select value={item.type} onValueChange={(value) => updateItem(item.id, { type: value })}>
+                <Select value={item.type} onValueChange={(value) => updateItem(item.id, { type: value as "string" | "number" | "boolean" | "object" | "integer" | "array" | undefined })}>
                   <SelectTrigger className="w-[120px]">
                     <SelectValue placeholder="Type" />
                   </SelectTrigger>

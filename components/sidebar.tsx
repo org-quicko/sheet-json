@@ -1,6 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import type React from "react"
+import { createPortal } from "react-dom"
+
+import { useState, useEffect } from "react"
 import {
   Plus,
   Table,
@@ -16,6 +19,7 @@ import {
   Eye,
   Copy,
   Check,
+  GripVertical,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,7 +30,7 @@ import { useSchemaStore } from "@/store/schema-store"
 import { cn } from "@/lib/utils"
 import type { ListBlock, TableBlock, KeyValuePair, TableHeader } from "@/types/schema"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { ImportSchemaDialogEmbedded } from "./import-schema-dialog-embedded"
+import { ImportSchemaDialog } from "./import-schema-dialog"
 
 export function Sidebar() {
   const {
@@ -45,6 +49,10 @@ export function Sidebar() {
     updateSheet,
     updateBlock,
     deleteBlock,
+    copySheet,
+    copyBlock,
+    reorderSheets,
+    reorderBlocks,
   } = useSchemaStore()
 
   const [newWorkbookName, setNewWorkbookName] = useState("")
@@ -74,6 +82,30 @@ export function Sidebar() {
     blockId: string
     blockName: string
   } | null>(null)
+
+  // Drag and drop state
+  const [draggedSheet, setDraggedSheet] = useState<string | null>(null)
+  const [draggedBlock, setDraggedBlock] = useState<string | null>(null)
+  const [dragOverSheet, setDragOverSheet] = useState<string | null>(null)
+  const [dragOverBlock, setDragOverBlock] = useState<string | null>(null)
+  const [isImportLoading, setIsImportLoading] = useState(false)
+  
+  // Listen for import loading state to blur the entire background (excluding dialog)
+  useEffect(() => {
+    const handler = (event: any) => {
+      if (event && event.detail && typeof event.detail.isLoading === "boolean") {
+        setIsImportLoading(event.detail.isLoading)
+      }
+    }
+    if (typeof window !== "undefined") {
+      window.addEventListener("schema-import-loading", handler as EventListener)
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("schema-import-loading", handler as EventListener)
+      }
+    }
+  }, [])
 
   const activeWorkbook = workbooks.find((wb) => wb.id === activeWorkbookId)
 
@@ -138,6 +170,79 @@ export function Sidebar() {
     }
     setIsDeleteBlockDialogOpen(false)
     setDeletingBlock(null)
+  }
+
+  // Drag and drop handlers for sheets
+  const handleSheetDragStart = (e: React.DragEvent, sheetId: string) => {
+    setDraggedSheet(sheetId)
+    e.dataTransfer.effectAllowed = "move"
+  }
+
+  const handleSheetDragOver = (e: React.DragEvent, sheetId: string) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+    setDragOverSheet(sheetId)
+  }
+
+  const handleSheetDragLeave = () => {
+    setDragOverSheet(null)
+  }
+
+  const handleSheetDrop = (e: React.DragEvent, targetSheetId: string) => {
+    e.preventDefault()
+    if (draggedSheet && draggedSheet !== targetSheetId && activeWorkbook) {
+      const fromIndex = activeWorkbook.sheets.findIndex((s) => s.id === draggedSheet)
+      const toIndex = activeWorkbook.sheets.findIndex((s) => s.id === targetSheetId)
+
+      if (fromIndex !== -1 && toIndex !== -1) {
+        reorderSheets(activeWorkbook.id, fromIndex, toIndex)
+      }
+    }
+    setDraggedSheet(null)
+    setDragOverSheet(null)
+  }
+
+  const handleSheetDragEnd = () => {
+    setDraggedSheet(null)
+    setDragOverSheet(null)
+  }
+
+  // Drag and drop handlers for blocks
+  const handleBlockDragStart = (e: React.DragEvent, blockId: string) => {
+    setDraggedBlock(blockId)
+    e.dataTransfer.effectAllowed = "move"
+  }
+
+  const handleBlockDragOver = (e: React.DragEvent, blockId: string) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+    setDragOverBlock(blockId)
+  }
+
+  const handleBlockDragLeave = () => {
+    setDragOverBlock(null)
+  }
+
+  const handleBlockDrop = (e: React.DragEvent, targetBlockId: string, sheetId: string) => {
+    e.preventDefault()
+    if (draggedBlock && draggedBlock !== targetBlockId && activeWorkbook) {
+      const sheet = activeWorkbook.sheets.find((s) => s.id === sheetId)
+      if (sheet) {
+        const fromIndex = sheet.blocks.findIndex((b) => b.id === draggedBlock)
+        const toIndex = sheet.blocks.findIndex((b) => b.id === targetBlockId)
+
+        if (fromIndex !== -1 && toIndex !== -1) {
+          reorderBlocks(activeWorkbook.id, sheetId, fromIndex, toIndex)
+        }
+      }
+    }
+    setDraggedBlock(null)
+    setDragOverBlock(null)
+  }
+
+  const handleBlockDragEnd = () => {
+    setDraggedBlock(null)
+    setDragOverBlock(null)
   }
 
   // Generate JSON Schema
@@ -344,8 +449,13 @@ export function Sidebar() {
         const writable = await fileHandle.createWritable()
         await writable.write(jsonString)
         await writable.close()
-      } catch (err) {
-        // User cancelled or API failed, fall back to download
+      } catch (err: any) {
+        // Check if user cancelled the dialog
+        if (err.name === "AbortError") {
+          // User cancelled, do nothing
+          return
+        }
+        // API failed, fall back to download
         console.error("File System Access API failed:", err)
         downloadFile(jsonString, fileName)
       }
@@ -403,8 +513,13 @@ export function Sidebar() {
           const writable = await fileHandle.createWritable()
           await writable.write(jsonString)
           await writable.close()
-        } catch (err) {
-          // User cancelled or API failed, fall back to download
+        } catch (err: any) {
+          // Check if user cancelled the dialog
+          if (err.name === "AbortError") {
+            // User cancelled, do nothing
+            return
+          }
+          // API failed, fall back to download
           console.error("File System Access API failed:", err)
           downloadFile(jsonString, fileName)
         }
@@ -472,6 +587,14 @@ export function Sidebar() {
 
   return (
     <div className="w-96 bg-gray-50 border-r border-gray-200 h-full flex flex-col">
+      {isImportLoading &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-40">
+            <div className="absolute inset-0 bg-black/20 backdrop-blur-md" />
+          </div>,
+          document.body,
+        )}
       {/* Header - Fixed */}
       <div className="flex-shrink-0 p-4 border-b border-gray-200 space-y-4">
         {/* Data Model Section */}
@@ -544,7 +667,7 @@ export function Sidebar() {
                 <DialogHeader>
                   <DialogTitle>Import JSON Schema</DialogTitle>
                 </DialogHeader>
-                <ImportSchemaDialogEmbedded onClose={() => setIsImportDialogOpen(false)} />
+                <ImportSchemaDialog onClose={() => setIsImportDialogOpen(false)} />
               </DialogContent>
             </Dialog>
 
@@ -791,9 +914,17 @@ export function Sidebar() {
               {activeWorkbook.sheets.map((sheet) => (
                 <div key={sheet.id} className="space-y-1">
                   <div
+                    draggable
+                    onDragStart={(e) => handleSheetDragStart(e, sheet.id)}
+                    onDragOver={(e) => handleSheetDragOver(e, sheet.id)}
+                    onDragLeave={handleSheetDragLeave}
+                    onDrop={(e) => handleSheetDrop(e, sheet.id)}
+                    onDragEnd={handleSheetDragEnd}
                     className={cn(
-                      "flex items-center justify-between p-2 rounded cursor-pointer hover:bg-gray-100",
+                      "flex items-center justify-between p-2 rounded cursor-pointer hover:bg-gray-100 transition-colors",
                       activeSheetId === sheet.id && "bg-blue-100",
+                      draggedSheet === sheet.id && "opacity-50",
+                      dragOverSheet === sheet.id && "bg-blue-50 border-2 border-blue-300 border-dashed",
                     )}
                     onClick={() => {
                       if (editingSheet !== sheet.id) {
@@ -803,6 +934,7 @@ export function Sidebar() {
                     }}
                   >
                     <div className="flex items-center flex-1 min-w-0">
+                      <GripVertical className="w-3 h-3 mr-1 flex-shrink-0 text-gray-400 cursor-grab active:cursor-grabbing" />
                       {expandedSheets.has(sheet.id) ? (
                         <ChevronDown className="w-3 h-3 mr-1 flex-shrink-0" />
                       ) : (
@@ -831,6 +963,15 @@ export function Sidebar() {
                         >
                           <Edit2 className="w-3 h-3 mr-2" />
                           Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            copySheet(activeWorkbook.id, sheet.id)
+                          }}
+                        >
+                          <Copy className="w-3 h-3 mr-2" />
+                          Copy
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={(e) => {
@@ -889,9 +1030,17 @@ export function Sidebar() {
                       {sheet.blocks.map((block) => (
                         <div
                           key={block.id}
+                          draggable
+                          onDragStart={(e) => handleBlockDragStart(e, block.id)}
+                          onDragOver={(e) => handleBlockDragOver(e, block.id)}
+                          onDragLeave={handleBlockDragLeave}
+                          onDrop={(e) => handleBlockDrop(e, block.id, sheet.id)}
+                          onDragEnd={handleBlockDragEnd}
                           className={cn(
-                            "flex items-center justify-between p-2 rounded cursor-pointer hover:bg-gray-50",
+                            "flex items-center justify-between p-2 rounded cursor-pointer hover:bg-gray-50 transition-colors",
                             activeBlockId === block.id && "bg-blue-50 border border-blue-200",
+                            draggedBlock === block.id && "opacity-50",
+                            dragOverBlock === block.id && "bg-blue-50 border-2 border-blue-300 border-dashed",
                           )}
                           onClick={() => {
                             setActiveSheet(sheet.id)
@@ -899,6 +1048,7 @@ export function Sidebar() {
                           }}
                         >
                           <div className="flex items-center flex-1 min-w-0">
+                            <GripVertical className="w-3 h-3 mr-1 flex-shrink-0 text-gray-400 cursor-grab active:cursor-grabbing" />
                             {block.type === "list" ? (
                               <List className="w-3 h-3 mr-2 text-gray-500 flex-shrink-0" />
                             ) : (
@@ -929,6 +1079,15 @@ export function Sidebar() {
                               >
                                 <Edit2 className="w-3 h-3 mr-2" />
                                 Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  copyBlock(activeWorkbook.id, sheet.id, block.id)
+                                }}
+                              >
+                                <Copy className="w-3 h-3 mr-2" />
+                                Copy
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={(e) => {
@@ -992,7 +1151,7 @@ export function Sidebar() {
 
               {activeWorkbook.sheets.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
-                  <p className="text-sm">No sheets in this workbook</p>
+                  <p className="text-sm mb-3">No sheets in this workbook</p>
                   <Button
                     size="sm"
                     variant="outline"

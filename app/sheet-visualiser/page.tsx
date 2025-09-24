@@ -661,30 +661,29 @@ export default function SheetVisualizerPage() {
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    {currentBlock["@entity"] === "table" && workbookSchema && (
-                      <AddDataDialog
-                        currentBlock={currentBlock}
-                        currentSheetName={currentSheet?.name || ""}
-                        workbookSchema={workbookSchema}
-                        onAddData={(newRowData) => {
-                          if (!workbookData) return
+                    {/* Add Data Dialog - now works with or without schema */}
+                    <AddDataDialog
+                      currentBlock={currentBlock}
+                      currentSheetName={currentSheet?.name || ""}
+                      workbookSchema={workbookSchema}
+                      onAddData={(newRowData) => {
+                        if (!workbookData) return
 
-                          const newData = { ...workbookData }
-                          const sheet = newData.sheets[activeSheetIndex]
-                          const block = sheet.blocks[activeBlockIndex]
+                        const newData = { ...workbookData }
+                        const sheet = newData.sheets[activeSheetIndex]
+                        const block = sheet.blocks[activeBlockIndex]
 
-                          if (block["@entity"] === "table") {
-                            if (!block.rows) block.rows = []
-                            block.rows.push(newRowData)
-                          } else if (block["@entity"] === "list") {
-                            if (!block.items) block.items = []
-                            block.items.push(newRowData)
-                          }
+                        if (block["@entity"] === "table") {
+                          if (!block.rows) block.rows = []
+                          block.rows.push(newRowData)
+                        } else if (block["@entity"] === "list") {
+                          if (!block.items) block.items = []
+                          block.items.push(newRowData)
+                        }
 
-                          setWorkbookData(newData)
-                        }}
-                      />
-                    )}
+                        setWorkbookData(newData)
+                      }}
+                    />
                   </div>
                 </div>
 
