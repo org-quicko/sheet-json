@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { FileSpreadsheet, Upload, Download, Settings, RefreshCw, AlertCircle, File, CheckCircle, X, Table, List, ChevronRight, ChevronDown, Database, LinkIcon, FileText } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -21,6 +21,8 @@ import { validateAllCells } from "./utils/validation"
 import { AddDataDialog } from "./components/add-data-dialog"
 
 export default function SheetVisualizerPage() {
+  const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
   const [workbookData, setWorkbookData] = useState<WorkbookData | null>(null)
   const [workbookSchema, setWorkbookSchema] = useState<SheetSchema | null>(null)
@@ -335,6 +337,21 @@ export default function SheetVisualizerPage() {
   const removeSchema = () => {
     setWorkbookSchema(null)
     setValidationErrors([])
+
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete("source_url")
+    router.replace(`${pathname}?${params.toString()}`)
+  }
+
+  const clearAll = () => {
+    setWorkbookData(null)
+    setWorkbookSchema(null)
+    setValidationErrors([])
+
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete("data_url")
+    params.delete("source_url")
+    router.replace(`${pathname}?${params.toString()}`)
   }
 
   const currentSheet = workbookData?.sheets[activeSheetIndex]
@@ -600,11 +617,7 @@ export default function SheetVisualizerPage() {
                   Export
                 </Button>
                 <Button
-                  onClick={() => {
-                    setWorkbookData(null)
-                    setWorkbookSchema(null)
-                    setValidationErrors([])
-                  }}
+                  onClick={clearAll}
                   variant="outline"
                   size="sm"
                 >
