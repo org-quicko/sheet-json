@@ -21,6 +21,7 @@ export function FormField({ id, label, fieldSchema, value, onChange, error }: Fo
   const types = Array.isArray(fieldSchema.type) ? fieldSchema.type : [fieldSchema.type]
   const primaryType = types[0]
   const isRequired = !fieldSchema.nullAllowed && !types.includes("null")
+  const safeLabel = label || ""
 
   const renderInput = () => {
     // Handle enum fields with select dropdown
@@ -28,7 +29,7 @@ export function FormField({ id, label, fieldSchema, value, onChange, error }: Fo
       return (
         <Select value={value} onValueChange={onChange}>
           <SelectTrigger>
-            <SelectValue placeholder={`Select ${label.toLowerCase()}`} />
+            <SelectValue placeholder={`Select ${safeLabel.toLowerCase()}`} />
           </SelectTrigger>
           <SelectContent>
             {fieldSchema.enum.map((option) => (
@@ -69,7 +70,7 @@ export function FormField({ id, label, fieldSchema, value, onChange, error }: Fo
               ? '{"key": "value"}'
               : primaryType === "array"
                 ? '["item1", "item2"]'
-                : `Enter ${label.toLowerCase()}`
+                : `Enter ${safeLabel.toLowerCase()}`
           }
           className={error ? "border-red-500" : ""}
           rows={3}
@@ -123,7 +124,7 @@ export function FormField({ id, label, fieldSchema, value, onChange, error }: Fo
         type={inputType}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={`Enter ${label.toLowerCase()}`}
+        placeholder={`Enter ${safeLabel.toLowerCase()}`}
         className={error ? "border-red-500" : ""}
         required={isRequired}
         {...inputProps}
