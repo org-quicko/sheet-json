@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { FileSpreadsheet, Upload, Download, Settings, RefreshCw, AlertCircle, File, CheckCircle, X, Table, List, ChevronRight, ChevronDown, Database, LinkIcon, FileText } from 'lucide-react'
 import { Button } from "@/components/ui/button"
@@ -20,7 +19,7 @@ import { VirtualizedTable } from "./components/virtualized-table"
 import { validateAllCells } from "./utils/validation"
 import { AddDataDialog } from "./components/add-data-dialog"
 
-export default function SheetVisualizerPage() {
+function SheetVisualizerContent() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -950,5 +949,13 @@ export default function SheetVisualizerPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SheetVisualizerPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center">Loading...</div>}>
+      <SheetVisualizerContent />
+    </Suspense>
   )
 }
