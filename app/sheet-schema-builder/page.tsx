@@ -15,18 +15,17 @@ function App() {
   const [importError, setImportError] = useState<string | null>(null)
 
   useEffect(() => {
-    const sourceUrl = searchParams.get("source_url")
+    const schemaUrl = searchParams.get("schema_url")
     
-    if (sourceUrl && !isImporting) {
+    if (schemaUrl && !isImporting) {
       setIsImporting(true)
       setImportError(null)
       
-      importSchemaFromUrl(sourceUrl)
+      importSchemaFromUrl(schemaUrl)
         .then(() => {
-          console.log("[v0] Successfully imported schema from URL:", sourceUrl)
-          // Remove the source_url parameter from the URL after successful import
+          console.log("[v0] Successfully imported schema from URL:", schemaUrl)
           const url = new URL(window.location.href)
-          url.searchParams.delete("source_url")
+          url.searchParams.delete("schema_url")
           window.history.replaceState({}, "", url.toString())
         })
         .catch((error) => {

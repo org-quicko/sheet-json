@@ -51,18 +51,18 @@ function SheetVisualizerContent() {
   // Handle query parameters for auto-import
   useEffect(() => {
     const dataUrl = searchParams.get("data_url")
-    const sourceUrl = searchParams.get("source_url")
+    const schemaUrl = searchParams.get("schema_url")
 
     const autoImport = async () => {
-      if (sourceUrl) {
-        await handleSchemaUrlImport(sourceUrl)
+      if (schemaUrl) {
+        await handleSchemaUrlImport(schemaUrl)
       }
       if (dataUrl) {
         await handleDataUrlImport(dataUrl)
       }
     }
 
-    if (dataUrl || sourceUrl) {
+    if (dataUrl || schemaUrl) {
       autoImport()
     }
   }, [searchParams])
@@ -338,7 +338,7 @@ function SheetVisualizerContent() {
     setValidationErrors([])
 
     const params = new URLSearchParams(searchParams.toString())
-    params.delete("source_url")
+    params.delete("schema_url")
     router.replace(`${pathname}?${params.toString()}`)
   }
 
@@ -349,7 +349,7 @@ function SheetVisualizerContent() {
 
     const params = new URLSearchParams(searchParams.toString())
     params.delete("data_url")
-    params.delete("source_url")
+    params.delete("schema_url")
     router.replace(`${pathname}?${params.toString()}`)
   }
 
