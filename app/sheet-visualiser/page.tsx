@@ -54,11 +54,11 @@ function SheetVisualizerContent() {
     const sourceUrl = searchParams.get("source_url")
 
     const autoImport = async () => {
-      if (dataUrl) {
-        await handleDataUrlImport(dataUrl)
-      }
       if (sourceUrl) {
         await handleSchemaUrlImport(sourceUrl)
+      }
+      if (dataUrl) {
+        await handleDataUrlImport(dataUrl)
       }
     }
 
