@@ -4,7 +4,7 @@ import { useSchemaStore } from "@/store/schema-store"
 export async function importSchemaFromUrl(url: string): Promise<void> {
   const { createWorkbook, createSheet, createBlock } = useSchemaStore.getState()
 
-  const response = await fetch(encodeURIComponent(url))
+  const response = await fetch(url)
   if (!response.ok) {
     throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`)
   }
