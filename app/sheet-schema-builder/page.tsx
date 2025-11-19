@@ -3,14 +3,82 @@
 import { SchemaBuilderProvider } from "@/hooks/useSchemaBuilder"
 import { Sidebar } from "@/components/sidebar"
 import { MainContent } from "@/components/main-content"
-import { FileSpreadsheet } from "lucide-react"
+import { FileSpreadsheet } from 'lucide-react'
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { useSearchParams } from 'next/navigation'
+import { useEffect, useState, Suspense } from "react"
+import { importSchemaFromUrl } from "@/lib/import-schema"
 
 function App() {
+  const searchParams = useSearchParams()
+  const [isImporting, setIsImporting] = useState(false)
+  const [importError, setImportError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const schemaUrl = searchParams.get("schema_url")
+    
+    if (schemaUrl && !isImporting) {
+      setIsImporting(true)
+      setImportError(null)
+      
+      importSchemaFromUrl(schemaUrl)
+        .then(() => {
+          console.log("[v0] Successfully imported schema from URL:", schemaUrl)
+          const url = new URL(window.location.href)
+          url.searchParams.delete("schema_url")
+          window.history.replaceState({}, "", url.toString())
+        })
+        .catch((error) => {
+          console.error("[v0] Failed to import schema from URL:", error)
+          setImportError(error instanceof Error ? error.message : "Failed to import schema")
+        })
+        .finally(() => {
+          setIsImporting(false)
+        })
+    }
+  }, [searchParams, isImporting])
+
   return (
     <SchemaBuilderProvider>
       <div className="flex h-screen bg-white overflow-hidden">
+        {isImporting && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-white rounded-lg shadow-lg p-8 mx-4 max-w-sm w-full">
+              <div className="text-center space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Importing Schema</h3>
+                  <p className="text-sm text-gray-600 mt-1">Loading workbook from URL...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {importError && (
+          <div className="fixed top-4 right-4 z-50 bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg max-w-md">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-red-800">Import Failed</h3>
+                <p className="text-sm text-red-700 mt-1">{importError}</p>
+              </div>
+              <button
+                onClick={() => setImportError(null)}
+                className="flex-shrink-0 text-red-400 hover:text-red-600"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex flex-col w-full">
           <header className="bg-white border-b">
@@ -44,5 +112,13 @@ function App() {
 }
 
 export default function SchemaBuilderPage() {
-  return <App />
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <App />
+    </Suspense>
+  )
 }

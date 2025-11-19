@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Plus, Edit, Trash2 } from "lucide-react"
+import { Plus, Edit, Trash2 } from 'lucide-react'
 import type { SheetSchema, FieldSchema } from "../types"
 import { getBlockSchema } from "../utils/schema"
 import { validateCell } from "../utils/validation"
@@ -40,6 +40,7 @@ export function AddDataDialog({
   const [formData, setFormData] = useState<Record<string, string>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [dynamicFields, setDynamicFields] = useState<Array<{ key: string; value: string }>>([])
+  const prevOpen = useRef(open)
 
   const blockSchema = workbookSchema ? getBlockSchema(workbookSchema, currentSheetName, currentBlock?.name) : null
   const isEditing = editingIndex !== undefined
@@ -47,7 +48,7 @@ export function AddDataDialog({
   const hasSchema = !!blockSchema
 
   useEffect(() => {
-    if (open) {
+    if (open && !prevOpen.current) {
       setErrors({})
 
       if (isEditing && isListBlock && currentBlock.items && currentBlock.items[editingIndex]) {
@@ -111,6 +112,7 @@ export function AddDataDialog({
         }
       }
     }
+    prevOpen.current = open
   }, [open, currentBlock, editingIndex, isEditing, isListBlock, hasSchema])
 
   if (!currentBlock) {

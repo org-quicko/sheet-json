@@ -3,16 +3,17 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { Link, FileText, Upload, X } from "lucide-react"
+import { Link, FileText, Upload, X } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useSchemaStore } from "@/store/schema-store"
-import type { ListBlock, TableBlock, KeyValuePair, TableHeader } from "@/types/schema"
+import { importSchemaFromUrl } from "@/lib/import-schema"
 import { cn } from "@/lib/utils"
+import type { ListBlock, TableBlock, KeyValuePair, TableHeader } from "@/types/schema"
+import { useSchemaStore } from "@/store/schema-store"
 
 type ImportSchemaDialogProps = {
   onClose?: () => void
@@ -326,13 +327,15 @@ export function ImportSchemaDialog({ onClose }: ImportSchemaDialogProps) {
     setError("")
 
     try {
-      const response = await fetch(schemaUrl)
-      if (!response.ok) {
-        throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`)
+      await importSchemaFromUrl(schemaUrl)
+      
+      setError("")
+      if (onClose) {
+        onClose()
       }
-
-      const schemaText = await response.text()
-      parseAndImportSchema(schemaText)
+      setPastedSchema("")
+      setSchemaUrl("")
+      setSelectedFile(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch schema from URL")
     } finally {
