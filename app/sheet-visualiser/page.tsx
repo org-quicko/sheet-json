@@ -127,7 +127,7 @@ function SheetVisualizerContent() {
     setIsLoading(true)
     setLoadingMessage("Fetching data from URL...")
     try {
-      const response = await fetch(encodeURIComponent(url))
+      const response = await fetch(url)
       if (!response.ok) throw new Error(`Failed to fetch: ${response.statusText}`)
       const data = await response.json()
       validateAndSetData(data)
@@ -161,7 +161,7 @@ function SheetVisualizerContent() {
     setIsLoading(true)
     setLoadingMessage("Fetching schema from URL...")
     try {
-      const response = await fetch(encodeURIComponent(url))
+      const response = await fetch(url)
       if (!response.ok) throw new Error(`Failed to fetch: ${response.statusText}`)
       const schema = await response.json()
       validateAndSetSchema(schema)
