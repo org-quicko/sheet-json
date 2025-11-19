@@ -3,28 +3,16 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import {
-  FileSpreadsheet,
-  Upload,
-  Download,
-  Settings,
-  RefreshCw,
-  AlertCircle,
-  File,
-  CheckCircle,
-  X,
-  Table,
-  List,
-  ChevronRight,
-  ChevronDown,
-  Database,
-} from "lucide-react"
+import { useSearchParams } from 'next/navigation'
+import { FileSpreadsheet, Upload, Download, Settings, RefreshCw, AlertCircle, File, CheckCircle, X, Table, List, ChevronRight, ChevronDown, Database, LinkIcon, FileText } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import type { WorkbookData, SheetSchema, ValidationError, ColumnWidth } from "./types"
@@ -33,6 +21,7 @@ import { validateAllCells } from "./utils/validation"
 import { AddDataDialog } from "./components/add-data-dialog"
 
 export default function SheetVisualizerPage() {
+  const searchParams = useSearchParams()
   const [workbookData, setWorkbookData] = useState<WorkbookData | null>(null)
   const [workbookSchema, setWorkbookSchema] = useState<SheetSchema | null>(null)
   const [activeSheetIndex, setActiveSheetIndex] = useState(0)
@@ -42,6 +31,8 @@ export default function SheetVisualizerPage() {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
   const [jsonInput, setJsonInput] = useState("")
   const [schemaInput, setSchemaInput] = useState("")
+  const [dataUrlInput, setDataUrlInput] = useState("")
+  const [schemaUrlInput, setSchemaUrlInput] = useState("")
   const [editingCell, setEditingCell] = useState<{ row: number; col: number } | null>(null)
   const [editingValue, setEditingValue] = useState("")
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null)
@@ -55,6 +46,25 @@ export default function SheetVisualizerPage() {
 
   const [isLoading, setIsLoading] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState("")
+
+  // Handle query parameters for auto-import
+  useEffect(() => {
+    const dataUrl = searchParams.get("data_url")
+    const sourceUrl = searchParams.get("source_url")
+
+    const autoImport = async () => {
+      if (dataUrl) {
+        await handleDataUrlImport(dataUrl)
+      }
+      if (sourceUrl) {
+        await handleSchemaUrlImport(sourceUrl)
+      }
+    }
+
+    if (dataUrl || sourceUrl) {
+      autoImport()
+    }
+  }, [searchParams])
 
   // Run validation when data changes
   useEffect(() => {
@@ -112,6 +122,24 @@ export default function SheetVisualizerPage() {
     }
   }
 
+  const handleDataUrlImport = async (url: string) => {
+    setIsLoading(true)
+    setLoadingMessage("Fetching data from URL...")
+    try {
+      const response = await fetch(url)
+      if (!response.ok) throw new Error(`Failed to fetch: ${response.statusText}`)
+      const data = await response.json()
+      validateAndSetData(data)
+      setDataUrlInput("")
+      setIsDataDialogOpen(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch data from URL")
+    } finally {
+      setIsLoading(false)
+      setLoadingMessage("")
+    }
+  }
+
   const handleSchemaImport = async (content: string) => {
     setIsLoading(true)
     setLoadingMessage("Importing schema...")
@@ -122,6 +150,24 @@ export default function SheetVisualizerPage() {
       setIsSchemaDialogOpen(false)
     } catch (err) {
       setError("Invalid JSON schema format")
+    } finally {
+      setIsLoading(false)
+      setLoadingMessage("")
+    }
+  }
+
+  const handleSchemaUrlImport = async (url: string) => {
+    setIsLoading(true)
+    setLoadingMessage("Fetching schema from URL...")
+    try {
+      const response = await fetch(url)
+      if (!response.ok) throw new Error(`Failed to fetch: ${response.statusText}`)
+      const schema = await response.json()
+      validateAndSetSchema(schema)
+      setSchemaUrlInput("")
+      setIsSchemaDialogOpen(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch schema from URL")
     } finally {
       setIsLoading(false)
       setLoadingMessage("")
@@ -350,58 +396,91 @@ export default function SheetVisualizerPage() {
                       <DialogTitle>Import Sheet Data</DialogTitle>
                     </DialogHeader>
 
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="text-base font-medium">Import Sheet Data</Label>
-                        <p className="text-sm text-gray-500 mb-3">Upload or paste your sheet data</p>
+                    <Tabs defaultValue="file" className="w-full">
+                      <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="file">File Upload</TabsTrigger>
+                        <TabsTrigger value="paste">Paste JSON</TabsTrigger>
+                        <TabsTrigger value="url">From URL</TabsTrigger>
+                      </TabsList>
 
-                        <div className="space-y-3">
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".json"
-                            onChange={handleDataFileUpload}
-                            className="hidden"
-                          />
-                          <Button
-                            onClick={() => fileInputRef.current?.click()}
-                            variant="outline"
-                            className="w-full"
-                            disabled={isLoading}
-                          >
-                            <File className="w-4 h-4 mr-2" />
-                            {isLoading ? "Loading..." : "Choose JSON File"}
-                          </Button>
+                      <TabsContent value="file" className="space-y-4 mt-4">
+                        <div className="space-y-4">
+                          <div>
+                            <Label className="text-base font-medium">Upload Data File</Label>
+                            <p className="text-sm text-gray-500 mb-3">Upload your sheet data JSON file</p>
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept=".json"
+                              onChange={handleDataFileUpload}
+                              className="hidden"
+                            />
+                            <Button
+                              onClick={() => fileInputRef.current?.click()}
+                              variant="outline"
+                              className="w-full h-32 border-dashed"
+                              disabled={isLoading}
+                            >
+                              <div className="flex flex-col items-center">
+                                <File className="w-8 h-8 mb-2 text-gray-400" />
+                                <span>{isLoading ? "Loading..." : "Click to choose JSON file"}</span>
+                              </div>
+                            </Button>
+                          </div>
+                        </div>
+                      </TabsContent>
 
-                          <div className="text-center text-gray-500 text-sm">or</div>
-
+                      <TabsContent value="paste" className="space-y-4 mt-4">
+                        <div className="space-y-4">
                           <div>
                             <Label>Paste JSON Data</Label>
                             <Textarea
                               placeholder="Paste your sheet-js compatible JSON here..."
                               value={jsonInput}
                               onChange={(e) => setJsonInput(e.target.value)}
-                              className="min-h-32 font-mono text-sm"
+                              className="min-h-[200px] font-mono text-sm"
                             />
                           </div>
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              onClick={() => handleDataImport(jsonInput)}
+                              disabled={isLoading || !jsonInput.trim()}
+                            >
+                              {isLoading ? "Importing..." : "Import Data"}
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex justify-end space-x-2">
-                        <Button variant="outline" onClick={() => setIsDataDialogOpen(false)}>
-                          Cancel
-                        </Button>
-                        <Button onClick={() => handleDataImport(jsonInput)} disabled={isLoading || !jsonInput.trim()}>
-                          {isLoading ? "Importing..." : "Import Data"}
-                        </Button>
-                      </div>
+                      </TabsContent>
 
-                      {error && (
-                        <Alert variant="destructive">
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertDescription>{error}</AlertDescription>
-                        </Alert>
-                      )}
-                    </div>
+                      <TabsContent value="url" className="space-y-4 mt-4">
+                        <div className="space-y-4">
+                          <div>
+                            <Label>Data URL</Label>
+                            <Input
+                              placeholder="https://example.com/data.json"
+                              value={dataUrlInput}
+                              onChange={(e) => setDataUrlInput(e.target.value)}
+                            />
+                            <p className="text-sm text-gray-500 mt-1">Enter a URL to fetch the JSON data from</p>
+                          </div>
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              onClick={() => handleDataUrlImport(dataUrlInput)}
+                              disabled={isLoading || !dataUrlInput.trim()}
+                            >
+                              {isLoading ? "Fetching..." : "Fetch Data"}
+                            </Button>
+                          </div>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+
+                    {error && (
+                      <Alert variant="destructive" className="mt-4">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{error}</AlertDescription>
+                      </Alert>
+                    )}
                   </DialogContent>
                 </Dialog>
 
@@ -418,61 +497,91 @@ export default function SheetVisualizerPage() {
                       <DialogTitle>Import Validation Schema</DialogTitle>
                     </DialogHeader>
 
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="text-base font-medium">Import Validation Schema</Label>
-                        <p className="text-sm text-gray-500 mb-3">Add validation rules and field constraints</p>
+                    <Tabs defaultValue="file" className="w-full">
+                      <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="file">File Upload</TabsTrigger>
+                        <TabsTrigger value="paste">Paste JSON</TabsTrigger>
+                        <TabsTrigger value="url">From URL</TabsTrigger>
+                      </TabsList>
 
-                        <div className="space-y-3">
-                          <input
-                            ref={schemaFileInputRef}
-                            type="file"
-                            accept=".json"
-                            onChange={handleSchemaFileUpload}
-                            className="hidden"
-                          />
-                          <Button
-                            onClick={() => schemaFileInputRef.current?.click()}
-                            variant="outline"
-                            className="w-full"
-                            disabled={isLoading}
-                          >
-                            <FileSpreadsheet className="w-4 h-4 mr-2" />
-                            {isLoading ? "Loading..." : "Choose Schema File"}
-                          </Button>
+                      <TabsContent value="file" className="space-y-4 mt-4">
+                        <div className="space-y-4">
+                          <div>
+                            <Label className="text-base font-medium">Upload Schema File</Label>
+                            <p className="text-sm text-gray-500 mb-3">Upload your JSON schema file</p>
+                            <input
+                              ref={schemaFileInputRef}
+                              type="file"
+                              accept=".json"
+                              onChange={handleSchemaFileUpload}
+                              className="hidden"
+                            />
+                            <Button
+                              onClick={() => schemaFileInputRef.current?.click()}
+                              variant="outline"
+                              className="w-full h-32 border-dashed"
+                              disabled={isLoading}
+                            >
+                              <div className="flex flex-col items-center">
+                                <FileSpreadsheet className="w-8 h-8 mb-2 text-gray-400" />
+                                <span>{isLoading ? "Loading..." : "Click to choose Schema file"}</span>
+                              </div>
+                            </Button>
+                          </div>
+                        </div>
+                      </TabsContent>
 
-                          <div className="text-center text-gray-500 text-sm">or</div>
-
+                      <TabsContent value="paste" className="space-y-4 mt-4">
+                        <div className="space-y-4">
                           <div>
                             <Label>Paste JSON Schema</Label>
                             <Textarea
                               placeholder="Paste your JSON schema here..."
                               value={schemaInput}
                               onChange={(e) => setSchemaInput(e.target.value)}
-                              className="min-h-32 font-mono text-sm"
+                              className="min-h-[200px] font-mono text-sm"
                             />
                           </div>
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              onClick={() => handleSchemaImport(schemaInput)}
+                              disabled={isLoading || !schemaInput.trim()}
+                            >
+                              {isLoading ? "Importing..." : "Import Schema"}
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex justify-end space-x-2">
-                        <Button variant="outline" onClick={() => setIsSchemaDialogOpen(false)}>
-                          Cancel
-                        </Button>
-                        <Button
-                          onClick={() => handleSchemaImport(schemaInput)}
-                          disabled={isLoading || !schemaInput.trim()}
-                        >
-                          {isLoading ? "Importing..." : "Import Schema"}
-                        </Button>
-                      </div>
+                      </TabsContent>
 
-                      {error && (
-                        <Alert variant="destructive">
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertDescription>{error}</AlertDescription>
-                        </Alert>
-                      )}
-                    </div>
+                      <TabsContent value="url" className="space-y-4 mt-4">
+                        <div className="space-y-4">
+                          <div>
+                            <Label>Schema URL</Label>
+                            <Input
+                              placeholder="https://example.com/schema.json"
+                              value={schemaUrlInput}
+                              onChange={(e) => setSchemaUrlInput(e.target.value)}
+                            />
+                            <p className="text-sm text-gray-500 mt-1">Enter a URL to fetch the JSON schema from</p>
+                          </div>
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              onClick={() => handleSchemaUrlImport(schemaUrlInput)}
+                              disabled={isLoading || !schemaUrlInput.trim()}
+                            >
+                              {isLoading ? "Fetching..." : "Fetch Schema"}
+                            </Button>
+                          </div>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+
+                    {error && (
+                      <Alert variant="destructive" className="mt-4">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{error}</AlertDescription>
+                      </Alert>
+                    )}
                   </DialogContent>
                 </Dialog>
               </div>
