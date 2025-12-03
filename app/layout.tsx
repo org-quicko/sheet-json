@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Sheet tools',
-  description: 'A collection of utilities for interacting with sheet-json',
+  title: 'Sheet Tools - Utility Tools for sheet-json | Labs at Quicko',
+  description: 'A collection of utilities for working with sheet-JSON — generate schemas, visualize data, and create objects effortlessly.',
   generator: 'v0.dev',
   icons: {
     icon: [

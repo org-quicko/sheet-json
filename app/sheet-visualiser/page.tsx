@@ -937,8 +937,8 @@ function SheetVisualizerContent() {
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center text-gray-500">
                 <FileSpreadsheet className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <h2 className="text-xl font-semibold mb-2">No Data Available</h2>
-                <p className="text-gray-600 mb-4">Import your sheet data to start visualizing and editing</p>
+                <h2 className="text-xl font-semibold mb-2">Ready to Import Your Data</h2>
+                <p className="text-gray-600 mb-4">Upload your sheet to begin exploring, visualizing, and editing your data.</p>
                 <Button onClick={() => setIsDataDialogOpen(true)}>
                   <Upload className="w-4 h-4 mr-2" />
                   Import Data

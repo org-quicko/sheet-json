@@ -12,6 +12,7 @@ import {
   Database,
   Download,
   Terminal,
+  Heart,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -92,7 +93,7 @@ export default function LandingPage() {
                   <CardTitle className="text-xl">Sheet Schema Builder</CardTitle>
                 </div>
                 <CardDescription className="text-base">
-                  Design and build JSON schemas for your sheet structures with an intuitive visual interface
+                  Design and build JSON schemas for your sheet structures with visual interface
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -255,7 +256,7 @@ export default function LandingPage() {
                 </Link>
               </CardContent>
             </Card>
-            
+
             {/* Coming Soon: Other Languages */}
             <Card className="border-2 hover:border-purple-200 transition-colors bg-white/80">
               <CardHeader>
@@ -402,23 +403,49 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-4 bg-gray-900 text-white">
+      <footer className="py-12 px-4 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white border-t border-gray-700">
         <div className="container mx-auto max-w-6xl">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <FileSpreadsheet className="w-6 h-6" />
-              <span className="text-lg font-semibold">Sheet Tools</span>
+          <div className="grid md:grid-cols-3 gap-8 items-center">
+            {/* Left: Branding */}
+            <div className="flex flex-col space-y-3">
+              <div className="flex items-center space-x-2">
+                <FileSpreadsheet className="w-7 h-7 text-blue-400" />
+                <span className="text-xl font-bold">Sheet Tools</span>
+              </div>
+              <p className="text-sm text-gray-400">Powerful utilities for sheet-json</p>
             </div>
-            <div className="flex items-center space-x-6">
+
+            {/* Center: Built with love */}
+            <div className="flex items-center justify-center">
+              <div className="flex items-center text-sm text-gray-300 bg-gray-800/50 px-4 py-2">
+                <span className="flex items-center">
+                  Built with
+                  <Heart className="mx-1.5 h-4 w-4 text-gray-300 fill-gray-300" />
+                  by
+                </span>
+                <Link
+                  href="https://quicko.company/labs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-1 font-medium text-gray-300 underline decoration-gray-300"
+                >
+                  Labs@Quicko
+                </Link>
+              </div>
+            </div>
+
+            {/* Right: Links and Info */}
+            <div className="flex flex-col items-end space-y-3">
               <Link
                 href="https://github.com/org-quicko/sheet-js"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-blue-400 transition-colors"
+                className="flex items-center space-x-2 hover:text-blue-400 transition-colors group"
               >
-                <Github className="w-5 h-5" />
+                <Github className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-medium">View on GitHub</span>
               </Link>
-              <span className="text-sm text-gray-400">Part of the sheet-json ecosystem</span>
+              <span className="text-xs text-gray-400">Part of the sheet-json ecosystem</span>
             </div>
           </div>
         </div>
