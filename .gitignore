@@ -1,5 +1,14 @@
 # Compiled class file
 *.class
+*.classpath
+*.project
+*.settings
+*.sts4-cache
+*target
+*.factorypath
+*bin
+*dependency-reduced-pom.xml
+*.flattened-pom.xml
 
 # Log file
 *.log
