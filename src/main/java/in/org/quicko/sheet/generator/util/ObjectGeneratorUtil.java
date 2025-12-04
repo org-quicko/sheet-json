@@ -9,8 +9,16 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Utility class to generate Java objects from JSON Schema.
+ */
 public class ObjectGeneratorUtil
 {
+
+	private ObjectGeneratorUtil()
+	{
+		// Private constructor to hide implicit public one
+	}
 
 	/**
 	 * Generate Java classes from a JSON Schema.
@@ -21,6 +29,8 @@ public class ObjectGeneratorUtil
 	 *            Where to write generated files
 	 * @param packageName
 	 *            Package name for generated classes
+	 * @throws IOException
+	 *             If there is an error writing files
 	 */
 	public static void generate(JsonNode schema, String outputDir, String packageName) throws IOException
 	{

@@ -20,8 +20,16 @@ import in.org.quicko.sheet.beans.Sheet;
 import in.org.quicko.sheet.beans.Table;
 import in.org.quicko.sheet.beans.Workbook;
 
+/**
+ * Utility class to generate JSON Schema from a Workbook object.
+ */
 public class JsonToSchemaGeneratorUtil
 {
+
+	private JsonToSchemaGeneratorUtil()
+	{
+		// Private constructor to hide implicit public one
+	}
 
 	/**
 	 * Takes a workbook object and produces a JSON Schema that: - uses oneOf for each block definition (for table vs
@@ -32,7 +40,9 @@ public class JsonToSchemaGeneratorUtil
 	 *            The workbook data to generate schema from
 	 * @return Generated JSON schema as a Map
 	 * @throws JsonProcessingException
+	 *             If there is an error processing JSON
 	 * @throws JsonMappingException
+	 *             If there is an error mapping JSON
 	 */
 	public static Map<String, Object> generate(Workbook data) throws JsonMappingException, JsonProcessingException
 	{

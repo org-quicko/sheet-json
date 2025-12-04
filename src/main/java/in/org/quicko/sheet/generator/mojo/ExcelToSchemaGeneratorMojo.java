@@ -23,6 +23,14 @@ public class ExcelToSchemaGeneratorMojo extends AbstractMojo
 {
 
 	/**
+	 * Default constructor
+	 */
+	public ExcelToSchemaGeneratorMojo()
+	{
+		// Default constructor
+	}
+
+	/**
 	 * Path to the source Excel file containing schema definitions
 	 */
 	@Parameter(required = true)

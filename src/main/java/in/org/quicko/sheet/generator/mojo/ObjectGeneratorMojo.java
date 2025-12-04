@@ -16,9 +16,20 @@ import org.apache.maven.project.MavenProject;
 
 import in.org.quicko.sheet.generator.util.ObjectGeneratorUtil;
 
+/**
+ * Mojo to generate Java POJOs from JSON Schema.
+ */
 @Mojo(name = "schema-to-pojo", defaultPhase = LifecyclePhase.GENERATE_SOURCES, requiresDependencyResolution = ResolutionScope.COMPILE, threadSafe = true)
 public class ObjectGeneratorMojo extends AbstractMojo
 {
+
+	/**
+	 * Default constructor
+	 */
+	public ObjectGeneratorMojo()
+	{
+		// Default constructor
+	}
 
 	/**
 	 * The source path to read the schema from.

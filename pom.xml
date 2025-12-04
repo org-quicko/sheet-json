@@ -5,12 +5,38 @@
 	
 	<groupId>in.org.quicko.sheet</groupId>
 	<artifactId>generator</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>in.org.quicko.sheet.generator</name>
 	<packaging>maven-plugin</packaging>
+
+	<description>A Maven plugin for generating sheets</description>
+	
+	<url>https://github.com/org-quicko/sheet-generator-java</url>
+	
+	<licenses>
+		<license>
+			<name>The Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+	
+	<developers>
+		<developer>
+			<name>Quicko Developer</name>
+			<email>developer@quicko.com</email>
+			<organization>Quicko</organization>
+			<organizationUrl>https://quicko.company</organizationUrl>
+		</developer>
+	</developers>
+	
+	<scm>
+		<connection>scm:git:git://github.com/org-quicko/sheet-generator-java.git</connection>
+		<developerConnection>scm:git:ssh://github.com:org-quicko/sheet-generator-java.git</developerConnection>
+		<url>https://github.com/org-quicko/sheet-generator-java/tree/main</url>
+	</scm>
 	
 	<properties>
-		<in-org-quicko-sheet-version>1.0.0-SNAPSHOT</in-org-quicko-sheet-version>		
+		<in-org-quicko-sheet-version>1.0.0</in-org-quicko-sheet-version>		
 		<junit-version>5.11.2</junit-version>
 		<mockito-version>5.11.0</mockito-version>
 		<org-json-version>20240303</org-json-version>
@@ -67,6 +93,7 @@
 	</dependencies>
 	<build>
 		<plugins>
+			<!-- Plugin Plugin -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-plugin-plugin</artifactId>
@@ -88,6 +115,8 @@
 					</execution>
 				</executions>
 			</plugin>
+
+			<!-- Compiler Plugin -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -97,6 +126,64 @@
 					<target>17</target>
 				</configuration>
 			</plugin>
+
+			<!-- Central Publishing Plugin -->
+			<plugin>
+				<groupId>org.sonatype.central</groupId>
+				<artifactId>central-publishing-maven-plugin</artifactId>
+				<version>0.9.0</version>
+				<extensions>true</extensions>
+				<configuration>
+				<publishingServerId>central</publishingServerId>
+				</configuration>
+			</plugin>
+			
+			<!-- GPG Signing -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>3.2.8</version>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<!-- Source JAR -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.4.0</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<!-- Javadoc JAR -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.12.0</version>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
 	</build>
 </project>

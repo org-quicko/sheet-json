@@ -23,6 +23,14 @@ import in.org.quicko.sheet.generator.util.WorkbookGeneratorUtil;
 public class JsonGeneratorMojo extends AbstractMojo
 {
 
+	/**
+	 * Default constructor
+	 */
+	public JsonGeneratorMojo()
+	{
+		// Default constructor
+	}
+
 	@Parameter(required = true)
 	private String sourcePath;
 

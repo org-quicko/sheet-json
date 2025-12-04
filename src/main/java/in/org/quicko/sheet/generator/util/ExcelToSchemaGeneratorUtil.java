@@ -20,7 +20,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
  * A single class that: 1) Parses an Excel file to find "list" or "table" blocks 2) Builds a JSON schema object
- * (Map<String, Object>) with all the advanced properties 3) Deduplicates repeated blocks by referencing them in a
+ * ({@code Map<String, Object>}) with all the advanced properties 3) Deduplicates repeated blocks by referencing them in a
  * top-level "definitions".
  *
  * The primary method is generateSchema(File excelFile).
@@ -28,13 +28,26 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class ExcelToSchemaGeneratorUtil
 {
 
+	private ExcelToSchemaGeneratorUtil()
+	{
+		// Private constructor to hide implicit public one
+	}
+
 	// -------------------------------------------------------------------------
 	// PUBLIC ENTRY POINT
 	// -------------------------------------------------------------------------
 
 	/**
-	 * High-level API: parse the Excel and return a JSON-schema as a Map<String,Object>. Then you can serialize it (e.g.
+	 * High-level API: parse the Excel and return a JSON-schema as a {@code Map<String,Object>}. Then you can serialize it (e.g.
 	 * with Jackson) as needed.
+	 *
+	 * @param excelFile
+	 *            The Excel file to parse
+	 * @param workbookName
+	 *            The name of the workbook
+	 * @return A map representing the JSON schema
+	 * @throws IOException
+	 *             If there is an error reading the file
 	 */
 	public static Map<String, Object> generate(File excelFile, String workbookName) throws IOException
 	{

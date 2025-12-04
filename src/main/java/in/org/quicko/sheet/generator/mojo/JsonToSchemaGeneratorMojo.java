@@ -23,6 +23,14 @@ import in.org.quicko.sheet.generator.util.JsonToSchemaGeneratorUtil;
 public class JsonToSchemaGeneratorMojo extends AbstractMojo
 {
 
+	/**
+	 * Default constructor
+	 */
+	public JsonToSchemaGeneratorMojo()
+	{
+		// Default constructor
+	}
+
 	@Parameter(required = true)
 	private String sourcePath;
 

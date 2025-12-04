@@ -8,8 +8,16 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Utility class to generate Mixin classes.
+ */
 public class MixinGeneratorUtil
 {
+
+	private MixinGeneratorUtil()
+	{
+		// Private constructor to hide implicit public one
+	}
 
 	/**
 	 * Generate mixin classes for each type

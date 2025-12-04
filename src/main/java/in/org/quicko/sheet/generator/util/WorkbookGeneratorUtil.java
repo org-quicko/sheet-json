@@ -21,8 +21,16 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+/**
+ * Utility class to generate Workbook classes.
+ */
 public class WorkbookGeneratorUtil
 {
+
+	private WorkbookGeneratorUtil()
+	{
+		// Private constructor to hide implicit public one
+	}
 
 	/**
 	 * Generate workbook class with all sheet types
@@ -35,6 +43,8 @@ public class WorkbookGeneratorUtil
 	 *            The directory to output the workbook class to
 	 * @param classNames
 	 *            Map to track generated class names
+	 * @param packageName
+	 *            The package name for the generated classes
 	 * @throws IOException
 	 *             If there's an error writing files
 	 */
@@ -117,13 +127,19 @@ public class WorkbookGeneratorUtil
 	/**
 	 * Converts an Excel workbook into the JSON structure:
 	 *
-	 * { "name": <workbookName>, "@entity": "workbook", "sheets": [ { "name": <sheetName>, "@entity": "sheet", "blocks":
-	 * [ { "name": <blockTitle>, "@entity": "table", "header": [...], "rows": [ [...], [...], ... ] }, { "name":
-	 * <blockTitle>, "@entity": "list", "items": [ {key1: val1}, {key2: val2}, ... ] } ... ] }, ... ] }
+	 * { "name": &lt;workbookName&gt;, "@entity": "workbook", "sheets": [ { "name": &lt;sheetName&gt;, "@entity": "sheet", "blocks":
+	 * [ { "name": &lt;blockTitle&gt;, "@entity": "table", "header": [...], "rows": [ [...], [...], ... ] }, { "name":
+	 * &lt;blockTitle&gt;, "@entity": "list", "items": [ {key1: val1}, {key2: val2}, ... ] } ... ] }, ... ] }
 	 *
 	 * This version does *not* assume the block title is in column A, nor does it skip a fixed number of rows. It simply
-	 * finds a merged region row => sees it as a block title => looks immediately at the following rows to parse a table
+	 * finds a merged region row =&gt; sees it as a block title =&gt; looks immediately at the following rows to parse a table
 	 * or list, stopping when it hits a blank row or the next merged-region block title.
+	 *
+	 * @param file
+	 *            The Excel file to parse
+	 * @return A JSONObject representing the workbook
+	 * @throws IOException
+	 *             If there is an error reading the file
 	 */
 	public static JSONObject fromExcel(File file) throws IOException
 	{
