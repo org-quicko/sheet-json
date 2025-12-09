@@ -46,7 +46,7 @@ export default function LandingPage() {
       <section className="py-20 px-4">
         <div className="container mx-auto text-center max-w-4xl">
           <Badge variant="secondary" className="mb-4">
-            Utility Tools for sheet-json
+            Utility Tools for Sheet-JSON
           </Badge>
           <h1 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
             Build, Visualize & Generate
