@@ -69,58 +69,109 @@ class TableGeneratorUtil
 		tableImports.add("import com.fasterxml.jackson.annotation.JsonTypeInfo;");
 		tableImports.add("import com.fasterxml.jackson.annotation.JsonTypeName;");
 		tableImports.add("import java.util.Arrays;");
+		tableImports.add("import java.util.Iterator;");
+		tableImports.add("import java.util.NoSuchElementException;");
+		tableImports.add("import java.util.Spliterator;");
+		tableImports.add("import java.util.Spliterators;");
+		tableImports.add("import java.util.stream.Stream;");
+		tableImports.add("import java.util.stream.StreamSupport;");
 		tableImports.add("import org.json.JSONArray;");
 		tableImports.add("import in.org.quicko.sheet.beans.Table;");
 
-		String tableClass = String.format(
-		        """
-		                package %s;
-		                %s
-		                %s
+		String tableClass = String
+		        .format("""
+		                        package %s;
+		                        %s
+		                        %s
 
-		                @JsonTypeName("%s")
-		                @JsonIgnoreProperties(ignoreUnknown = true)
-		                @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "name", visible = true)
-		                public class %s extends Table
+		                        @JsonTypeName(\"%s\")
+		                        @JsonIgnoreProperties(ignoreUnknown = true)
+		                        @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = \"name\", visible = true)
+		                        public class %s extends Table implements Iterable<%s>
+		                        {
+		                private static JSONArray header = new JSONArray(
+		                	Arrays.asList(
+		                		%s
+		                	)
+		                );
+
+		                private static final long serialVersionUID = %dL;
+
+		                public %s()
 		                {
-		                \tprivate static JSONArray header = new JSONArray(
-		                \t\tArrays.asList(
-		                \t\t\t%s
-		                \t\t)
-		                \t);
-
-		                \tprivate static final long serialVersionUID = %dL;
-
-		                \tpublic %s()
-		                \t{
-		                \t\tsuper.setHeader(header);
-		                \t}
-
-		                \t@Override
-		                \tpublic %s getRow(int index)
-		                \t{
-		                \t\tJSONArray row = super.getRow(index);
-		                \t\tif (row instanceof %s tableRow)
-		                \t\t{
-		                \t\t\treturn tableRow;
-		                \t\t}
-		                \t\telse
-		                \t\t{
-		                \t\t\t%s tableRow = new %s(row);
-		                \t\t\tthis.replaceRow(index, tableRow);
-		                \t\t\treturn tableRow;
-		                \t\t}
-		                \t}
-
-		                \tpublic void add%s(%s row)
-		                \t{
-		                \t\tsuper.addRow(row);
-		                \t}
+		                	super.setHeader(header);
 		                }
-		                """,
+
+		                @Override
+		                public %s getRow(int index)
+		                {
+		                	JSONArray row = super.getRow(index);
+		                	if (row instanceof %s tableRow)
+		                	{
+		                		return tableRow;
+		                	}
+		                	else
+		                	{
+		                		%s tableRow = new %s(row);
+		                		this.replaceRow(index, tableRow);
+		                		return tableRow;
+		                	}
+		                }
+
+		                public void add%s(%s row)
+		                {
+		                	super.addRow(row);
+		                }
+
+		                @Override
+		                public Iterator<%s> iterator()
+		                {
+		                	return new Iterator<>()
+		                	{
+		                		private int index = 0;
+
+		                		@Override
+		                		public boolean hasNext()
+		                		{
+		                			return index < size();
+		                		}
+
+		                		@Override
+		                		public %s next()
+		                		{
+		                			if (!hasNext())
+		                			{
+		                				throw new NoSuchElementException("No more rows at index " + index);
+		                			}
+		                			return getRow(index++);
+		                		}
+		                	};
+		                }
+
+		                public Stream<%s> stream()
+		                {
+		                	return StreamSupport.stream(spliterator(), false);
+		                }
+
+		                public Stream<%s> parallelStream()
+		                {
+		                	return StreamSupport.stream(spliterator(), true);
+		                }
+
+		                @Override
+		                public Spliterator<%s> spliterator()
+		                {
+		                	return Spliterators.spliterator(iterator(), size(),
+		                			Spliterator.ORDERED | Spliterator.NONNULL | Spliterator.SIZED | Spliterator.SUBSIZED);
+		                }
+		        }
+		        """,
 		        tablePackage, GeneratorUtil.AUTO_GEN_COMMENT, String.join("\n", tableImports), blockName,
-		        blockClassName, headerArray, GeneratorUtil.generateSerialVersionUID(), blockClassName, rowClassName,
-		        rowClassName, rowClassName, rowClassName, rowClassName.replace("Row", ""), rowClassName).trim();
+		        blockClassName, rowClassName, headerArray, GeneratorUtil.generateSerialVersionUID(),
+		        blockClassName, rowClassName, rowClassName, rowClassName, rowClassName,
+		        rowClassName.replace("Row", ""), rowClassName, rowClassName, rowClassName, rowClassName, rowClassName,
+		        rowClassName)
+		        .trim();
 
 		Files.createDirectories(Paths.get(tableDirectory));
 		Files.writeString(Paths.get(tableDirectory, blockClassName + ".java"), tableClass);

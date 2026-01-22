@@ -5,7 +5,7 @@
 	
 	<groupId>in.org.quicko.sheet</groupId>
 	<artifactId>generator</artifactId>
-	<version>1.0.0</version>
+	<version>1.1.0</version>
 	<name>in.org.quicko.sheet.generator</name>
 	<packaging>maven-plugin</packaging>
 
@@ -36,7 +36,7 @@
 	</scm>
 	
 	<properties>
-		<in-org-quicko-sheet-version>1.0.0</in-org-quicko-sheet-version>		
+		<in-org-quicko-sheet-version>1.1.0</in-org-quicko-sheet-version>		
 		<junit-version>5.11.2</junit-version>
 		<mockito-version>5.11.0</mockito-version>
 		<org-json-version>20240303</org-json-version>
