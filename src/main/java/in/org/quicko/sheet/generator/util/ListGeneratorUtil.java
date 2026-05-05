@@ -1,6 +1,6 @@
 package in.org.quicko.sheet.generator.util;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,7 +45,7 @@ class ListGeneratorUtil
 
 		// Generate getters and setters for each property
 		List<String> gettersSetters = new ArrayList<>();
-		properties.fields().forEachRemaining(field -> {
+		properties.properties().forEach(field -> {
 			String key = field.getKey();
 			String type =
 			        GeneratorUtil.getJavaType(field.getValue().path("type"), field.getValue().path("format").asText());

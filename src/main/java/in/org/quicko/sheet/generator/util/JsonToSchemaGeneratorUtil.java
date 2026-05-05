@@ -1,8 +1,7 @@
 package in.org.quicko.sheet.generator.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,12 +38,10 @@ public class JsonToSchemaGeneratorUtil
 	 * @param data
 	 *            The workbook data to generate schema from
 	 * @return Generated JSON schema as a Map
-	 * @throws JsonProcessingException
-	 *             If there is an error processing JSON
-	 * @throws JsonMappingException
-	 *             If there is an error mapping JSON
+	 * @throws JacksonException
+	 *             If there is an error reading or writing JSON
 	 */
-	public static Map<String, Object> generate(Workbook data) throws JsonMappingException, JsonProcessingException
+	public static Map<String, Object> generate(Workbook data) throws JacksonException
 	{
 		// Basic validations
 		if (data == null || data.getSheets() == null || data.getSheets().isEmpty())
@@ -276,12 +273,10 @@ public class JsonToSchemaGeneratorUtil
 	 * @param schema
 	 *            The fully built schema
 	 * @return A map of definitions that should be attached to the root schema
-	 * @throws JsonProcessingException
-	 * @throws JsonMappingException
+	 * @throws JacksonException
 	 */
 	@SuppressWarnings("unchecked")
-	private static Map<String, Object> deduplicateBlocks(Map<String, Object> schema)
-	        throws JsonMappingException, JsonProcessingException
+	private static Map<String, Object> deduplicateBlocks(Map<String, Object> schema) throws JacksonException
 	{
 		// This will hold all block definitions that appear more than once
 		// Key: canonical JSON of the block definition
@@ -522,12 +517,10 @@ public class JsonToSchemaGeneratorUtil
 	 *
 	 * In real production code, you can parse via Jackson or GSON into a Map again.
 	 * 
-	 * @throws JsonProcessingException
-	 * @throws JsonMappingException
+	 * @throws JacksonException
 	 */
 	@SuppressWarnings("unchecked")
-	private static Map<String, Object> fromCanonicalJson(String canonical)
-	        throws JsonMappingException, JsonProcessingException
+	private static Map<String, Object> fromCanonicalJson(String canonical) throws JacksonException
 	{
 		return new ObjectMapper().readValue(canonical, Map.class);
 	}

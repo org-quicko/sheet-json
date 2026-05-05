@@ -1,6 +1,6 @@
 package in.org.quicko.sheet.generator.mojo;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.nio.file.Paths;
