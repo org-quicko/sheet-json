@@ -2,8 +2,8 @@ package in.org.quicko.sheet.generator.util;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -60,6 +60,7 @@ class TableGeneratorUtilTest
 		Path generatedFile = tempDir.resolve("asset_wise_tax_pnl_summary").resolve("beans")
 		        .resolve(blockClassName + ".java");
 		String generatedSource = Files.readString(generatedFile);
+		String normalizedSource = GeneratedSourceTestSupport.normalizeSource(generatedSource);
 
 		assertTrue(generatedSource.contains("implements Iterable<AssetWiseTaxPnlSummaryRow>"),
 		        "Table should implement Iterable with the row type");
@@ -79,5 +80,11 @@ class TableGeneratorUtilTest
 		        "stream() should rely on StreamSupport");
 		assertTrue(generatedSource.contains("StreamSupport.stream(spliterator(), true)"),
 		        "parallelStream() should request parallel stream");
+		assertTrue(normalizedSource.contains("import com.fasterxml.jackson.annotation.JsonIgnoreProperties;"),
+		        "Table should preserve the baseline Jackson annotation imports");
+		assertTrue(normalizedSource.contains("@JsonTypeName(\"asset_wise_tax_pnl_summary\")"),
+		        "Table type name annotation should stay stable across the cutover");
+		assertTrue(normalizedSource.contains("private static final long serialVersionUID = <SERIAL>;"),
+		        "Table assertions should tolerate non-deterministic serialVersionUID generation");
 	}
 }
