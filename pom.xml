@@ -5,7 +5,7 @@
 	
 	<groupId>in.org.quicko.sheet</groupId>
 	<artifactId>generator</artifactId>
-	<version>2.0.0-SNAPSHOT</version>
+	<version>2.0.0</version>
 	<name>in.org.quicko.sheet.generator</name>
 	<packaging>maven-plugin</packaging>
 
@@ -39,7 +39,7 @@
 		<maven-compiler-plugin-version>3.13.0</maven-compiler-plugin-version>
 		<maven-plugin-tools-version>3.15.2</maven-plugin-tools-version>
 		<maven-surefire-plugin-version>3.5.4</maven-surefire-plugin-version>
-		<in-org-quicko-sheet-version>2.0.0-SNAPSHOT</in-org-quicko-sheet-version>		
+		<in-org-quicko-sheet-version>2.0.0</in-org-quicko-sheet-version>		
 		<junit-version>5.11.2</junit-version>
 		<mockito-version>5.11.0</mockito-version>
 		<org-json-version>20240303</org-json-version>
