@@ -40,7 +40,7 @@ export function FieldConfigDialog({ field, onSave, trigger }: FieldConfigDialogP
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-hide">
         <DialogHeader>
           <DialogTitle>Configure Field: {fieldName || "Unnamed"}</DialogTitle>
         </DialogHeader>
