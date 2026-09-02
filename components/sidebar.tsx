@@ -24,13 +24,14 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { useSchemaStore } from "@/store/schema-store"
 import { cn } from "@/lib/utils"
 import type { ListBlock, TableBlock, KeyValuePair, TableHeader } from "@/types/schema"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ImportSchemaDialog } from "./import-schema-dialog"
+import { WorkbookCombobox } from "./workbook-combobox"
+import { useResizableSidebar } from "@/hooks/use-resizable-sidebar"
 
 export function Sidebar() {
   const {
@@ -89,7 +90,9 @@ export function Sidebar() {
   const [dragOverSheet, setDragOverSheet] = useState<string | null>(null)
   const [dragOverBlock, setDragOverBlock] = useState<string | null>(null)
   const [isImportLoading, setIsImportLoading] = useState(false)
-  
+
+  const { width: sidebarWidth, isResizing, handlePointerDown, resetWidth } = useResizableSidebar()
+
   // Listen for import loading state to blur the entire background (excluding dialog)
   useEffect(() => {
     const handler = (event: any) => {
@@ -586,7 +589,8 @@ export function Sidebar() {
   const schema = generateJsonSchema()
 
   return (
-    <div className="w-96 bg-gray-50 border-r border-gray-200 h-full flex flex-col">
+    <div className="relative h-full flex-shrink-0" style={{ width: sidebarWidth }}>
+      <div className="bg-gray-50 border-r border-gray-200 h-full flex flex-col overflow-hidden">
       {isImportLoading &&
         typeof document !== "undefined" &&
         createPortal(
@@ -603,31 +607,12 @@ export function Sidebar() {
             <h2 className="text-xl font-bold">Workbooks</h2>
           </div>
 
-          {/* Workbook Dropdown */}
-          <Select
-            value={activeWorkbookId || ""}
-            onValueChange={(value) => {
-              if (value) {
-                setActiveWorkbook(value)
-              }
-            }}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a workbook" />
-            </SelectTrigger>
-            <SelectContent>
-              {workbooks.map((workbook) => (
-                <SelectItem key={workbook.id} value={workbook.id}>
-                  {workbook.name}
-                </SelectItem>
-              ))}
-              {workbooks.length === 0 && (
-                <SelectItem value="no-workbooks" disabled>
-                  No workbooks available
-                </SelectItem>
-              )}
-            </SelectContent>
-          </Select>
+          {/* Workbook Search / Selector */}
+          <WorkbookCombobox
+            workbooks={workbooks}
+            activeWorkbookId={activeWorkbookId}
+            onSelect={(id) => setActiveWorkbook(id)}
+          />
 
           {/* Action Buttons */}
           <div className="flex items-center space-x-2">
@@ -1181,6 +1166,21 @@ export function Sidebar() {
           </div>
         </div>
       )}
+      </div>
+
+      {/* Resize Handle */}
+      <div
+        onPointerDown={handlePointerDown}
+        onDoubleClick={resetWidth}
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize sidebar"
+        className={cn(
+          "absolute top-0 right-0 z-10 h-full w-1 -translate-x-1/2 cursor-col-resize touch-none select-none",
+          "hover:bg-blue-400/60",
+          isResizing && "bg-blue-500/70",
+        )}
+      />
     </div>
   )
 }
