@@ -10,7 +10,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { importSchemaFromUrl } from "@/lib/import-schema"
+import { importSchemaFromUrl, extractWorkbookNameFromSchema, WorkbookNameConflictError } from "@/lib/import-schema"
+import { workbookNameExistsInStorage } from "@/lib/workbook-storage"
+import { OverwriteWorkbookDialog } from "@/components/overwrite-workbook-dialog"
 import { cn } from "@/lib/utils"
 import type { ListBlock, TableBlock, KeyValuePair, TableHeader } from "@/types/schema"
 import { useSchemaStore } from "@/store/schema-store"
@@ -19,14 +21,19 @@ type ImportSchemaDialogProps = {
   onClose?: () => void
 }
 
+// A pending import waiting on user confirmation to overwrite an existing workbook.
+type PendingImport = { source: "text"; schemaText: string } | { source: "url"; url: string }
+
 export function ImportSchemaDialog({ onClose }: ImportSchemaDialogProps) {
-  const { createWorkbook, createSheet, createBlock } = useSchemaStore()
+  const { createWorkbook, deleteWorkbookByName, createSheet, createBlock } = useSchemaStore()
   const [pastedSchema, setPastedSchema] = useState("")
   const [schemaUrl, setSchemaUrl] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [pendingImport, setPendingImport] = useState<PendingImport | null>(null)
+  const [conflictWorkbookName, setConflictWorkbookName] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -36,26 +43,23 @@ export function ImportSchemaDialog({ onClose }: ImportSchemaDialogProps) {
     }
   }, [isLoading])
 
-  const parseAndImportSchema = async (schemaText: string) => {
+  const parseAndImportSchema = async (schemaText: string, overwrite = false) => {
     setIsLoading(true)
     try {
       const schema = JSON.parse(schemaText)
+      const sheetsProperty = schema.properties?.sheets
+      const workbookName = extractWorkbookNameFromSchema(schema)
 
-      // Validate this is a JSON Schema
-      if (!schema.$schema || !schema.properties) {
-        throw new Error("Invalid JSON Schema format. Expected schema with $schema and properties.")
+      if (!overwrite && (await workbookNameExistsInStorage(workbookName))) {
+        setIsLoading(false)
+        setPendingImport({ source: "text", schemaText })
+        setConflictWorkbookName(workbookName)
+        return
       }
 
-      // Extract workbook name and validate structure
-      const workbookNameEnum = schema.properties.name?.enum
-      const workbookEntityEnum = schema.properties["@entity"]?.enum
-      const sheetsProperty = schema.properties.sheets
-
-      if (!workbookNameEnum || !workbookEntityEnum || workbookEntityEnum[0] !== "workbook" || !sheetsProperty) {
-        throw new Error("Invalid workbook schema structure.")
+      if (overwrite) {
+        deleteWorkbookByName(workbookName)
       }
-
-      const workbookName = workbookNameEnum[0]
 
       // Create workbook
       createWorkbook(workbookName)
@@ -317,7 +321,7 @@ export function ImportSchemaDialog({ onClose }: ImportSchemaDialogProps) {
     }
   }
 
-  const handleUrlImport = async () => {
+  const handleUrlImport = async (overwrite = false) => {
     if (!schemaUrl.trim()) {
       setError("Please enter a URL")
       return
@@ -327,8 +331,8 @@ export function ImportSchemaDialog({ onClose }: ImportSchemaDialogProps) {
     setError("")
 
     try {
-      await importSchemaFromUrl(schemaUrl)
-      
+      await importSchemaFromUrl(schemaUrl, { overwrite })
+
       setError("")
       if (onClose) {
         onClose()
@@ -337,10 +341,34 @@ export function ImportSchemaDialog({ onClose }: ImportSchemaDialogProps) {
       setSchemaUrl("")
       setSelectedFile(null)
     } catch (err) {
+      if (err instanceof WorkbookNameConflictError) {
+        setIsLoading(false)
+        setPendingImport({ source: "url", url: schemaUrl })
+        setConflictWorkbookName(err.workbookName)
+        return
+      }
       setError(err instanceof Error ? err.message : "Failed to fetch schema from URL")
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleConfirmOverwrite = () => {
+    const pending = pendingImport
+    setPendingImport(null)
+    setConflictWorkbookName(null)
+    if (!pending) return
+
+    if (pending.source === "text") {
+      parseAndImportSchema(pending.schemaText, true)
+    } else {
+      handleUrlImport(true)
+    }
+  }
+
+  const handleCancelOverwrite = () => {
+    setPendingImport(null)
+    setConflictWorkbookName(null)
   }
 
   const clearSelectedFile = () => {
@@ -469,7 +497,7 @@ export function ImportSchemaDialog({ onClose }: ImportSchemaDialogProps) {
             />
             <p className="text-sm text-gray-500 mt-2">Enter a URL to fetch the JSON schema from</p>
           </div>
-          <Button onClick={handleUrlImport} disabled={isLoading || !schemaUrl.trim()} className="w-full">
+          <Button onClick={() => handleUrlImport()} disabled={isLoading || !schemaUrl.trim()} className="w-full">
             <Link className="w-4 h-4 mr-2" />
             {isLoading ? "Fetching..." : "Import from URL"}
           </Button>
@@ -481,6 +509,13 @@ export function ImportSchemaDialog({ onClose }: ImportSchemaDialogProps) {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+
+      <OverwriteWorkbookDialog
+        open={pendingImport !== null && conflictWorkbookName !== null}
+        workbookName={conflictWorkbookName ?? ""}
+        onConfirm={handleConfirmOverwrite}
+        onCancel={handleCancelOverwrite}
+      />
     </>
   )
 }

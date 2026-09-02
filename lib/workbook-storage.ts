@@ -1,11 +1,14 @@
 import type { Workbook } from "@/types/schema"
+import { idbGet, idbGetAll, idbPut, idbDelete, WORKBOOKS_STORE, META_STORE } from "@/lib/indexeddb"
 
-// Each workbook is persisted under its own localStorage key (namespaced by its
-// name) instead of one shared blob. This means importing/creating/editing one
-// workbook can never clobber or corrupt the data of another workbook.
-const WORKBOOK_KEY_PREFIX = "sheet-tools:workbook:"
-const META_KEY = "sheet-tools:schema-meta"
-const LEGACY_KEY = "schema-store"
+// Each workbook is persisted as its own IndexedDB record keyed by its
+// *name*. This means importing/creating/editing one workbook can never
+// clobber or corrupt the data of another workbook, and there's no single
+// blob that can become corrupted for the whole app.
+const META_KEY = "schema-meta"
+const LEGACY_ZUSTAND_KEY = "schema-store"
+const LEGACY_WORKBOOK_KEY_PREFIX = "sheet-tools:workbook:"
+const LEGACY_META_KEY = "sheet-tools:schema-meta"
 
 export interface SchemaMeta {
   activeWorkbookId: string | null
@@ -13,116 +16,139 @@ export interface SchemaMeta {
   activeBlockId: string | null
 }
 
-export function getWorkbookStorageKey(name: string): string {
-  return `${WORKBOOK_KEY_PREFIX}${encodeURIComponent(name)}`
-}
+const EMPTY_META: SchemaMeta = { activeWorkbookId: null, activeSheetId: null, activeBlockId: null }
 
-export function saveWorkbookToStorage(workbook: Workbook): void {
-  if (typeof window === "undefined") return
-  try {
-    window.localStorage.setItem(getWorkbookStorageKey(workbook.name), JSON.stringify(workbook))
-  } catch (error) {
-    console.error("[v0] Failed to save workbook to storage:", error)
+export async function saveWorkbookToStorage(workbook: Workbook, previousName?: string): Promise<void> {
+  await idbPut(WORKBOOKS_STORE, workbook.name, workbook)
+  if (previousName && previousName !== workbook.name) {
+    await idbDelete(WORKBOOKS_STORE, previousName)
   }
 }
 
-export function removeWorkbookFromStorage(name: string): void {
-  if (typeof window === "undefined") return
-  try {
-    window.localStorage.removeItem(getWorkbookStorageKey(name))
-  } catch (error) {
-    console.error("[v0] Failed to remove workbook from storage:", error)
-  }
+export async function removeWorkbookFromStorage(name: string): Promise<void> {
+  await idbDelete(WORKBOOKS_STORE, name)
 }
 
-export function workbookNameExistsInStorage(name: string): boolean {
-  if (typeof window === "undefined") return false
-  return window.localStorage.getItem(getWorkbookStorageKey(name)) !== null
+export async function workbookNameExistsInStorage(name: string): Promise<boolean> {
+  const existing = await idbGet<Workbook>(WORKBOOKS_STORE, name)
+  return existing !== undefined
 }
 
-export function loadWorkbooksFromStorage(): Workbook[] {
-  if (typeof window === "undefined") return []
-  const workbooks: Workbook[] = []
-  try {
-    for (let i = 0; i < window.localStorage.length; i++) {
-      const key = window.localStorage.key(i)
-      if (!key || !key.startsWith(WORKBOOK_KEY_PREFIX)) continue
-
-      const raw = window.localStorage.getItem(key)
-      if (!raw) continue
-
-      try {
-        const workbook = JSON.parse(raw) as Workbook
-        if (workbook && workbook.id && workbook.name) {
-          workbooks.push(workbook)
-        }
-      } catch (parseError) {
-        console.error(`[v0] Failed to parse workbook stored at "${key}":`, parseError)
-      }
-    }
-  } catch (error) {
-    console.error("[v0] Failed to load workbooks from storage:", error)
-  }
-  return workbooks
+export async function loadWorkbooksFromStorage(): Promise<Workbook[]> {
+  const workbooks = await idbGetAll<Workbook>(WORKBOOKS_STORE)
+  return workbooks.filter((wb) => wb && wb.id && wb.name)
 }
 
-export function saveMetaToStorage(meta: SchemaMeta): void {
-  if (typeof window === "undefined") return
-  try {
-    window.localStorage.setItem(META_KEY, JSON.stringify(meta))
-  } catch (error) {
-    console.error("[v0] Failed to save schema meta to storage:", error)
-  }
+export async function saveMetaToStorage(meta: SchemaMeta): Promise<void> {
+  await idbPut(META_STORE, META_KEY, meta)
 }
 
-export function loadMetaFromStorage(): SchemaMeta {
-  const empty: SchemaMeta = { activeWorkbookId: null, activeSheetId: null, activeBlockId: null }
-  if (typeof window === "undefined") return empty
-  try {
-    const raw = window.localStorage.getItem(META_KEY)
-    if (!raw) return empty
-    const parsed = JSON.parse(raw)
-    return {
-      activeWorkbookId: parsed.activeWorkbookId ?? null,
-      activeSheetId: parsed.activeSheetId ?? null,
-      activeBlockId: parsed.activeBlockId ?? null,
-    }
-  } catch (error) {
-    console.error("[v0] Failed to load schema meta from storage:", error)
-    return empty
+export async function loadMetaFromStorage(): Promise<SchemaMeta> {
+  const meta = await idbGet<SchemaMeta>(META_STORE, META_KEY)
+  if (!meta) return EMPTY_META
+  return {
+    activeWorkbookId: meta.activeWorkbookId ?? null,
+    activeSheetId: meta.activeSheetId ?? null,
+    activeBlockId: meta.activeBlockId ?? null,
   }
 }
 
 /**
- * One-time migration from the old single-key zustand `persist` blob
- * ("schema-store") to the new per-workbook keys, so existing users don't
- * lose their data when this storage scheme changes.
+ * One-time migration into IndexedDB from whatever earlier storage scheme is
+ * found in localStorage:
+ *  - the original zustand `persist` blob under "schema-store", or
+ *  - the short-lived per-name localStorage keys ("sheet-tools:workbook:*")
+ * Existing users keep their data; both legacy keys are cleared afterward.
  */
-export function migrateLegacyStorageIfNeeded(): void {
+export async function migrateLegacyStorageIfNeeded(): Promise<void> {
   if (typeof window === "undefined") return
+
   try {
-    const legacyRaw = window.localStorage.getItem(LEGACY_KEY)
-    if (!legacyRaw) return
-
-    const legacy = JSON.parse(legacyRaw)
-    const legacyWorkbooks: Workbook[] = legacy?.state?.workbooks ?? []
-
-    legacyWorkbooks.forEach((workbook) => {
-      if (workbook?.name && !workbookNameExistsInStorage(workbook.name)) {
-        saveWorkbookToStorage(workbook)
-      }
-    })
-
-    if (!window.localStorage.getItem(META_KEY)) {
-      saveMetaToStorage({
-        activeWorkbookId: legacy?.state?.activeWorkbookId ?? null,
-        activeSheetId: legacy?.state?.activeSheetId ?? null,
-        activeBlockId: legacy?.state?.activeBlockId ?? null,
-      })
+    const alreadyMigrated = (await idbGetAll<Workbook>(WORKBOOKS_STORE)).length > 0
+    if (alreadyMigrated) {
+      // Still clean up stray legacy keys even if IndexedDB already has data.
+      clearLegacyLocalStorageKeys()
+      return
     }
 
-    window.localStorage.removeItem(LEGACY_KEY)
+    const migratedWorkbooks: Workbook[] = []
+    let migratedMeta: SchemaMeta | null = null
+
+    // Legacy scheme 1: zustand persist blob.
+    const legacyRaw = window.localStorage.getItem(LEGACY_ZUSTAND_KEY)
+    if (legacyRaw) {
+      try {
+        const legacy = JSON.parse(legacyRaw)
+        const legacyWorkbooks: Workbook[] = legacy?.state?.workbooks ?? []
+        migratedWorkbooks.push(...legacyWorkbooks)
+        migratedMeta = {
+          activeWorkbookId: legacy?.state?.activeWorkbookId ?? null,
+          activeSheetId: legacy?.state?.activeSheetId ?? null,
+          activeBlockId: legacy?.state?.activeBlockId ?? null,
+        }
+      } catch (error) {
+        console.error("[v0] Failed to parse legacy zustand schema store:", error)
+      }
+    }
+
+    // Legacy scheme 2: per-name localStorage keys.
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i)
+      if (!key || !key.startsWith(LEGACY_WORKBOOK_KEY_PREFIX)) continue
+      const raw = window.localStorage.getItem(key)
+      if (!raw) continue
+      try {
+        const workbook = JSON.parse(raw) as Workbook
+        if (workbook?.id && workbook?.name) {
+          migratedWorkbooks.push(workbook)
+        }
+      } catch (error) {
+        console.error(`[v0] Failed to parse legacy workbook at "${key}":`, error)
+      }
+    }
+
+    if (!migratedMeta) {
+      const legacyMetaRaw = window.localStorage.getItem(LEGACY_META_KEY)
+      if (legacyMetaRaw) {
+        try {
+          migratedMeta = JSON.parse(legacyMetaRaw)
+        } catch (error) {
+          console.error("[v0] Failed to parse legacy schema meta:", error)
+        }
+      }
+    }
+
+    const seenNames = new Set<string>()
+    for (const workbook of migratedWorkbooks) {
+      if (seenNames.has(workbook.name)) continue
+      seenNames.add(workbook.name)
+      await saveWorkbookToStorage(workbook)
+    }
+
+    if (migratedMeta) {
+      await saveMetaToStorage(migratedMeta)
+    }
+
+    clearLegacyLocalStorageKeys()
   } catch (error) {
     console.error("[v0] Failed to migrate legacy schema store:", error)
+  }
+}
+
+function clearLegacyLocalStorageKeys(): void {
+  if (typeof window === "undefined") return
+  try {
+    window.localStorage.removeItem(LEGACY_ZUSTAND_KEY)
+    window.localStorage.removeItem(LEGACY_META_KEY)
+    const staleKeys: string[] = []
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i)
+      if (key && key.startsWith(LEGACY_WORKBOOK_KEY_PREFIX)) {
+        staleKeys.push(key)
+      }
+    }
+    staleKeys.forEach((key) => window.localStorage.removeItem(key))
+  } catch (error) {
+    console.error("[v0] Failed to clear legacy localStorage keys:", error)
   }
 }

@@ -3,44 +3,99 @@
 import { SchemaBuilderProvider } from "@/hooks/useSchemaBuilder"
 import { Sidebar } from "@/components/sidebar"
 import { MainContent } from "@/components/main-content"
+import { OverwriteWorkbookDialog } from "@/components/overwrite-workbook-dialog"
 import { FileSpreadsheet } from 'lucide-react'
 import Link from "next/link"
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState, Suspense } from "react"
-import { importSchemaFromUrl } from "@/lib/import-schema"
+import { importSchemaFromUrl, WorkbookNameConflictError } from "@/lib/import-schema"
+import { useSchemaStore } from "@/store/schema-store"
 
 function App() {
   const searchParams = useSearchParams()
+  const isHydrated = useSchemaStore((state) => state.isHydrated)
+  const hydrate = useSchemaStore((state) => state.hydrate)
   const [isImporting, setIsImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
+  const [conflictWorkbookName, setConflictWorkbookName] = useState<string | null>(null)
+  const [pendingSchemaUrl, setPendingSchemaUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    hydrate()
+  }, [hydrate])
+
+  const clearSchemaUrlParam = () => {
+    const url = new URL(window.location.href)
+    url.searchParams.delete("schema_url")
+    window.history.replaceState({}, "", url.toString())
+  }
+
+  const runImport = (schemaUrl: string, overwrite = false) => {
+    setIsImporting(true)
+    setImportError(null)
+
+    importSchemaFromUrl(schemaUrl, { overwrite })
+      .then(() => {
+        console.log("[v0] Successfully imported schema from URL:", schemaUrl)
+        clearSchemaUrlParam()
+      })
+      .catch((error) => {
+        if (error instanceof WorkbookNameConflictError) {
+          setPendingSchemaUrl(schemaUrl)
+          setConflictWorkbookName(error.workbookName)
+          return
+        }
+        console.error("[v0] Failed to import schema from URL:", error)
+        setImportError(error instanceof Error ? error.message : "Failed to import schema")
+        clearSchemaUrlParam()
+      })
+      .finally(() => {
+        setIsImporting(false)
+      })
+  }
 
   useEffect(() => {
     const schemaUrl = searchParams.get("schema_url")
-    
-    if (schemaUrl && !isImporting) {
-      setIsImporting(true)
-      setImportError(null)
-      
-      importSchemaFromUrl(schemaUrl)
-        .then(() => {
-          console.log("[v0] Successfully imported schema from URL:", schemaUrl)
-          const url = new URL(window.location.href)
-          url.searchParams.delete("schema_url")
-          window.history.replaceState({}, "", url.toString())
-        })
-        .catch((error) => {
-          console.error("[v0] Failed to import schema from URL:", error)
-          setImportError(error instanceof Error ? error.message : "Failed to import schema")
-        })
-        .finally(() => {
-          setIsImporting(false)
-        })
+
+    if (schemaUrl && isHydrated && !isImporting && !pendingSchemaUrl) {
+      runImport(schemaUrl)
     }
-  }, [searchParams, isImporting])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, isHydrated, isImporting, pendingSchemaUrl])
+
+  const handleConfirmOverwrite = () => {
+    const schemaUrl = pendingSchemaUrl
+    setPendingSchemaUrl(null)
+    setConflictWorkbookName(null)
+    if (schemaUrl) {
+      runImport(schemaUrl, true)
+    }
+  }
+
+  const handleCancelOverwrite = () => {
+    setPendingSchemaUrl(null)
+    setConflictWorkbookName(null)
+    clearSchemaUrlParam()
+  }
+
+  if (!isHydrated) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
 
   return (
     <SchemaBuilderProvider>
       <div className="flex h-screen bg-white overflow-hidden">
+        <OverwriteWorkbookDialog
+          open={pendingSchemaUrl !== null && conflictWorkbookName !== null}
+          workbookName={conflictWorkbookName ?? ""}
+          onConfirm={handleConfirmOverwrite}
+          onCancel={handleCancelOverwrite}
+        />
+
         {isImporting && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
             <div className="bg-white rounded-lg shadow-lg p-8 mx-4 max-w-sm w-full">

@@ -1,8 +1,41 @@
 import type { ListBlock, TableBlock, KeyValuePair, TableHeader } from "@/types/schema"
 import { useSchemaStore } from "@/store/schema-store"
+import { workbookNameExistsInStorage } from "@/lib/workbook-storage"
 
-export async function importSchemaFromUrl(url: string): Promise<void> {
-  const { createWorkbook, createSheet, createBlock } = useSchemaStore.getState()
+/**
+ * Thrown by `importSchemaFromUrl` when the schema's workbook name collides
+ * with an already-existing workbook and the caller hasn't explicitly opted
+ * in to overwriting it.
+ */
+export class WorkbookNameConflictError extends Error {
+  workbookName: string
+
+  constructor(workbookName: string) {
+    super(`A workbook named "${workbookName}" already exists.`)
+    this.name = "WorkbookNameConflictError"
+    this.workbookName = workbookName
+  }
+}
+
+/** Validates a JSON Schema is a workbook schema and extracts its workbook name. */
+export function extractWorkbookNameFromSchema(schema: any): string {
+  if (!schema.$schema || !schema.properties) {
+    throw new Error("Invalid JSON Schema format. Expected schema with $schema and properties.")
+  }
+
+  const workbookNameEnum = schema.properties.name?.enum
+  const workbookEntityEnum = schema.properties["@entity"]?.enum
+  const sheetsProperty = schema.properties.sheets
+
+  if (!workbookNameEnum || !workbookEntityEnum || workbookEntityEnum[0] !== "workbook" || !sheetsProperty) {
+    throw new Error("Invalid workbook schema structure.")
+  }
+
+  return workbookNameEnum[0]
+}
+
+export async function importSchemaFromUrl(url: string, options?: { overwrite?: boolean }): Promise<void> {
+  const { createWorkbook, deleteWorkbookByName, createSheet, createBlock } = useSchemaStore.getState()
 
   const response = await fetch(url)
   if (!response.ok) {
@@ -12,21 +45,17 @@ export async function importSchemaFromUrl(url: string): Promise<void> {
   const schemaText = await response.text()
   const schema = JSON.parse(schemaText)
 
-  // Validate this is a JSON Schema
-  if (!schema.$schema || !schema.properties) {
-    throw new Error("Invalid JSON Schema format. Expected schema with $schema and properties.")
+  // Validate this is a JSON Schema and extract structure
+  const sheetsProperty = schema.properties?.sheets
+  const workbookName = extractWorkbookNameFromSchema(schema)
+
+  if (!options?.overwrite && (await workbookNameExistsInStorage(workbookName))) {
+    throw new WorkbookNameConflictError(workbookName)
   }
 
-  // Extract workbook name and validate structure
-  const workbookNameEnum = schema.properties.name?.enum
-  const workbookEntityEnum = schema.properties["@entity"]?.enum
-  const sheetsProperty = schema.properties.sheets
-
-  if (!workbookNameEnum || !workbookEntityEnum || workbookEntityEnum[0] !== "workbook" || !sheetsProperty) {
-    throw new Error("Invalid workbook schema structure.")
+  if (options?.overwrite) {
+    deleteWorkbookByName(workbookName)
   }
-
-  const workbookName = workbookNameEnum[0]
 
   // Create workbook
   createWorkbook(workbookName)
