@@ -1,0 +1,61 @@
+{
+	"name": "@org-quicko/sheet-generator",
+	"version": "1.0.3",
+	"description": "Utility to generate TypeScript classes and schemas from JSON or Excel files.",
+	"author": "Quicko <developer@quicko.org.in>",
+	"main": "dist/index.cjs",
+	"types": "dist/index.d.ts",
+	"type": "module",
+	"bin": {
+		"json-to-schema": "dist/commands/json-to-schema.cjs",
+		"excel-to-schema": "dist/commands/excel-to-schema.cjs",
+		"schema-to-objects": "dist/commands/schema-to-object.cjs"
+	},
+	"scripts": {
+		"clean": "npm cache clean --force",
+		"lint": "eslint .",
+    	"lint:fix": "eslint . --fix",
+		"prebuild": "rm -rf dist && eslint .",
+		"build": "rollup -c"
+	},
+	"license": "ISC",
+	"files": [
+		"dist/**/*"
+	],
+	"exports": {
+		".": "./dist/index.cjs"
+	},
+	"directories": {
+		"lib": "./dist"
+	},
+	"engines": {
+		"node": ">=8.0.0"
+	},
+	"dependencies": {
+		"@org-quicko/core": "^1.1.0",
+		"@org-quicko/sheet": "^1.0.1",
+		"class-transformer": "^0.5.1",
+		"class-validator": "^0.14.0",
+		"commander": "^13.0.0",
+		"g": "^2.0.1",
+		"reflect-metadata": "^0.2.2",
+		"xlsx": "https://cdn.sheetjs.com/xlsx-0.20.1/xlsx-0.20.1.tgz"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.26.0",
+		"@rollup/plugin-commonjs": "^28.0.3",
+		"@rollup/plugin-node-resolve": "^16.0.1",
+		"@rollup/plugin-typescript": "^12.1.2",
+		"@types/node": "^22.7.0",
+		"@typescript-eslint/eslint-plugin": "^8.33.1",
+		"@typescript-eslint/parser": "^8.33.1",
+		"esbuild-plugin-eslint": "^0.3.7",
+		"eslint": "^9.28.0",
+		"eslint-config-prettier": "^10.1.5",
+		"eslint-import-resolver-typescript": "^3.7.0",
+		"glob": "^11.0.2",
+		"rollup": "^4.40.2",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.6.2"
+	}
+}
