@@ -1,0 +1,85 @@
+---
+title: "Sheet.js: Spreadsheet-Like Data Structures for TypeScript"
+sidebarTitle: "Introduction"
+description: "Sheet.js is a TypeScript library for building spreadsheet-like data structures in JSON with XLSX import/export and class-transformer integration."
+---
+
+Sheet.js (`@org-quicko/sheet`) is a TypeScript toolkit for representing, manipulating, and serializing spreadsheet-like data entirely in code. Rather than generating files on the fly or wrestling with binary formats, you model your data as a structured object graph — Workbooks containing Sheets, each Sheet holding one or more typed blocks — then serialize to JSON or round-trip to XLSX whenever you need to. It is built on `class-transformer` and `reflect-metadata`, so every class is fully decorator-aware and fits naturally into any NestJS, Express, or plain TypeScript project.
+
+<Note>
+  Sheet.js requires **Node.js 8 or later** and **TypeScript 5 or later**. The
+  TypeScript compiler options `experimentalDecorators` and
+  `emitDecoratorMetadata` must be enabled, and `reflect-metadata` must be
+  imported at your application entry point before any decorated class is loaded.
+</Note>
+
+## The Workbook → Sheet → Block hierarchy
+
+Sheet.js organises data in three nested layers:
+
+- **Workbook** — the top-level container. A `Workbook` holds an ordered array of `Sheet` objects and maps directly to a single `.xlsx` file when exported.
+- **Sheet** — a named tab inside a workbook. Each `Sheet` holds an ordered array of `Block` objects (either `Table` or `List`).
+- **Block** — the unit of data. A block is either a `Table` (column headers + typed rows) or a `List` (ordered key-value pairs). Multiple blocks can coexist on the same sheet, separated by empty rows in the XLSX representation.
+
+This mirrors the conceptual model of a spreadsheet while keeping every piece of data strongly typed and JSON-serializable at every layer.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="JSON-native data model" icon="brackets-curly">
+    Every class — `Workbook`, `Sheet`, `Table`, `List`, `Item` — serializes to
+    and from plain JSON with zero manual mapping. The `@entity` discriminator
+    field lets class-transformer reconstruct the correct concrete type
+    automatically on deserialization.
+  </Card>
+  <Card title="Hierarchical structure" icon="sitemap">
+    The Workbook → Sheet → Block hierarchy mirrors the mental model of a
+    spreadsheet, making it intuitive to build, traverse, and mutate complex
+    multi-sheet reports programmatically without touching any file I/O.
+  </Card>
+  <Card title="XLSX round-trip" icon="file-spreadsheet">
+    `Workbook.fromXlsx(buffer)` converts an XLSX buffer into a fully typed
+    object graph. `Workbook.toXlsx(workbook)` converts it back. Date columns
+    with `epoch` in the header name are automatically converted between epoch
+    milliseconds and ISO strings during both directions.
+  </Card>
+  <Card title="class-transformer compatible" icon="wand-magic-sparkles">
+    Every bean is decorated with `@Expose()`, `@Type()`, and `@Transform()`
+    from `class-transformer`, so `instanceToPlain` and `plainToInstance` work
+    out of the box. The `@entity` discriminator on `Sheet.blocks` ensures
+    `Table` and `List` instances are faithfully reconstructed from JSON.
+  </Card>
+</CardGroup>
+
+## When to use Sheet.js
+
+- **Generating reports programmatically** — build a multi-sheet sales or audit report in code and export it to XLSX for distribution, without ever opening a spreadsheet application.
+- **Ingesting uploaded spreadsheets** — parse an XLSX file uploaded by a user into a typed `Workbook` and process each `Table` block row-by-row inside your business logic.
+- **Exchanging structured tabular data via APIs** — serialize a `Workbook` to JSON for a REST or GraphQL response and let the client reconstruct it with `plainToInstance`.
+- **Automating large tradebooks or data pipelines** — merge, transform, or validate complex multi-block sheets without manual spreadsheet manipulation, leveraging the full TypeScript type system throughout.
+
+## The two block types: Table vs List
+
+A `Sheet` can contain any mix of `Table` and `List` blocks. They serve different structural purposes:
+
+| | `Table` | `List` |
+|---|---|---|
+| **Structure** | A header row plus zero or more data rows | An ordered collection of key-value `Item` pairs |
+| **Use case** | Columnar records (transactions, line items, time-series) | Named metadata (report parameters, configuration, totals) |
+| **XLSX cell A1** | Block name, then header row, then data rows | Block name (must end in `list`), then `key \| value` rows |
+| **Primary access** | `getHeader()`, `getRow(n)`, `addRow(row)` | `getItem(key)`, `addItem(item)` |
+
+When a block name ends with the word `list` (case-insensitive), the XLSX converter automatically treats it as a `List`; otherwise it is treated as a `Table`.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="quickstart">
+    Install the package and build your first `Workbook` with a `Table` and
+    `List` block in under five minutes.
+  </Card>
+  <Card title="Data model" icon="layer-group" href="concepts/data-model">
+    Dive deeper into the full class hierarchy, the `@entity` discriminator
+    system, and how `class-transformer` is wired throughout the library.
+  </Card>
+</CardGroup>

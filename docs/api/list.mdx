@@ -1,0 +1,207 @@
+---
+title: "List — key-value item block for Sheet.js metadata"
+sidebarTitle: "List"
+description: "API reference for the List class in Sheet.js. Stores an ordered collection of key-value Item objects with case-insensitive key lookup and flexible removal methods."
+---
+
+`List` is the key-value block type in Sheet.js. It extends `Block` and stores an ordered array of `Item` objects, each of which is a key-value pair. Lists are useful for capturing structured metadata or configuration alongside tabular data within the same sheet — for example, a report header containing a title, run date, and filter parameters. During JSON deserialization, a custom `ListTransformer` handles the conversion between the wire format (an array of single-key objects) and the in-memory `Item[]` representation. A `List` is identified during serialization by its `@entity` value of `"list"`.
+
+## Import
+
+```ts
+import { List, Item } from '@org-quicko/sheet';
+import { JSONValue } from '@org-quicko/core';
+```
+
+---
+
+## Constructor
+
+```ts
+new List()
+```
+
+Creates a new `List` with an empty `items` array.
+
+---
+
+## Instance Methods
+
+### `getItems()`
+
+```ts
+getItems(): Array<Item>
+```
+
+Returns all items in the list. Lazily initializes the internal array to an empty `Array<Item>` if it is `null`.
+
+<ResponseField name="return" type="Array<Item>">
+  All items in insertion order.
+</ResponseField>
+
+---
+
+### `getItem(key)`
+
+```ts
+getItem(key: string): Item | null
+```
+
+Finds and returns the first item whose key matches the supplied string.
+
+<ParamField path="key" type="string" required>
+  The key to search for. Matching is **case-insensitive**.
+</ParamField>
+
+<ResponseField name="return" type="Item | null">
+  The first matching `Item`, or `null` if no item with that key exists.
+</ResponseField>
+
+---
+
+### `addItem(item)`
+
+```ts
+addItem(item: Item): void
+```
+
+Appends a single `Item` to the end of the list.
+
+<ParamField path="item" type="Item" required>
+  The `Item` to append.
+</ParamField>
+
+---
+
+### `addItems(items)`
+
+```ts
+addItems(items: Item[]): void
+```
+
+Appends multiple items in a single call.
+
+<ParamField path="items" type="Item[]" required>
+  An array of `Item` objects to append in order.
+</ParamField>
+
+---
+
+### `replaceItem(item)`
+
+```ts
+replaceItem(item: Item): void
+```
+
+Finds the first existing item whose key matches `item.getKey()` (using an **exact, case-sensitive** key comparison) and replaces it with the supplied instance. If no matching item is found, the method returns silently.
+
+<ParamField path="item" type="Item" required>
+  The replacement `Item`. Its key is used to locate the item being replaced.
+</ParamField>
+
+<Warning>
+  `replaceItem` does **not** append the item if the key is not found. The list is left unchanged. Use `addItem` if you want upsert behaviour.
+</Warning>
+
+<Note>
+  The internal key comparison in `replaceItem` uses strict equality (`===`) rather than the case-insensitive comparison used by `getItem`. Ensure key casing matches exactly.
+</Note>
+
+---
+
+### `removeItem(index)` / `removeItem(key)`
+
+```ts
+removeItem(index: number): void
+removeItem(key: string): void
+```
+
+Overloaded removal method. Pass a **number** to remove by zero-based index, or a **string** to remove all items whose key matches the given value.
+
+<ParamField path="index" type="number">
+  Zero-based array index of the item to remove.
+</ParamField>
+
+<ParamField path="key" type="string">
+  Key string to match. Matching is **case-insensitive**.
+</ParamField>
+
+<Warning>
+  When called with a string key, `removeItem` removes **all** items whose key matches — not just the first one. If duplicate keys exist in the list, every matching item is deleted in a single call.
+</Warning>
+
+---
+
+### `length()`
+
+```ts
+length(): number
+```
+
+<ResponseField name="return" type="number">
+  The total number of items currently in the list.
+</ResponseField>
+
+---
+
+## Inherited from `BaseObject`
+
+| Method | Signature | Description |
+|---|---|---|
+| `getName` | `getName(): string` | Returns `"list"` — set via `Reflect` metadata. |
+| `getEntity` | `getEntity(): string` | Returns `"list"` — the `@entity` discriminator value. |
+| `getMetadata` | `getMetadata(): JSONObject` | Returns the block's metadata map, lazily initialized. |
+| `setMetadata` | `setMetadata(value: JSONObject): void` | Replaces the block's metadata map. |
+
+---
+
+## XLSX Naming Convention
+
+During XLSX import, a block is parsed as a `List` (rather than a `Table`) when the first cell in the block's opening row ends with the string `"list"` (case-insensitive). Name your list blocks accordingly — e.g. `"report_metadata_list"`, `"config_list"` — so the converter routes them correctly.
+
+---
+
+## Usage Example
+
+```ts
+import { List, Item, Sheet, Workbook } from '@org-quicko/sheet';
+import * as fs from 'fs';
+
+// ── Build a List programmatically ─────────────────────────────────────────
+const config = new List();
+
+config.addItem(new Item('report_title', 'Monthly Revenue Report'));
+config.addItem(new Item('generated_by', 'pipeline-v2'));
+config.addItem(new Item('record_count', 1024));
+config.addItem(new Item('active', true));
+
+console.log('Items:', config.length()); // 4
+
+// ── Retrieve by key (case-insensitive) ────────────────────────────────────
+const title = config.getItem('Report_Title'); // matches 'report_title'
+console.log(title?.getStringValue()); // 'Monthly Revenue Report'
+
+// ── Replace an item ───────────────────────────────────────────────────────
+config.replaceItem(new Item('record_count', 2048)); // key must match exactly
+console.log(config.getItem('record_count')?.getNumberValue()); // 2048
+
+// ── Remove by index ───────────────────────────────────────────────────────
+config.removeItem(3); // removes 'active'
+
+// ── Remove by key — removes ALL matches ──────────────────────────────────
+config.addItem(new Item('tag', 'q1'));
+config.addItem(new Item('tag', 'finance'));
+config.removeItem('tag'); // both 'tag' items are deleted
+console.log(config.length()); // 3
+
+// ── Attach to a Sheet and export ─────────────────────────────────────────
+const sheet = new Sheet();
+sheet.addBlock(config);
+
+const workbook = new Workbook();
+workbook.addSheet(sheet);
+
+const xlsxWb = Workbook.toXlsx(workbook);
+import * as XLSX from 'xlsx';
+XLSX.writeFile(xlsxWb, './output.xlsx');
+```

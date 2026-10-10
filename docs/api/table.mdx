@@ -1,0 +1,255 @@
+---
+title: "Table — columnar data block with headers and rows"
+sidebarTitle: "Table"
+description: "API reference for the Table class in Sheet.js. Stores columnar data as a header JSONArray and rows JSONArray, with column projection and row manipulation methods."
+---
+
+`Table` is the primary columnar data structure in Sheet.js. It extends `Block` and stores data as a flat header (`JSONArray`) and an array of row arrays (`JSONArray` of `JSONArray`s). Tables are attached to a `Sheet` and are identified during serialization by their `@entity` value of `"table"`. You can construct a `Table` directly, call `setHeader` to define column names, then use the various `addRow` / `removeRow` / `replaceRow` methods to manage data. The `getColumns()` method provides a column-oriented projection of the same data.
+
+## Import
+
+```ts
+import { Table } from '@org-quicko/sheet';
+import { JSONArray } from '@org-quicko/core';
+```
+
+---
+
+## Constructor
+
+```ts
+new Table()
+```
+
+Creates a new `Table` with empty `header` and `rows` arrays. Both are initialized as `new JSONArray()`.
+
+---
+
+## Instance Methods
+
+### `getHeader()`
+
+```ts
+getHeader(): JSONArray
+```
+
+<ResponseField name="return" type="JSONArray">
+  The table's column header row. Returns an empty `JSONArray` when no header has been set.
+</ResponseField>
+
+---
+
+### `setHeader(header)`
+
+```ts
+setHeader(header: JSONArray): void
+```
+
+Replaces the table's header with the supplied array. The order of elements in `header` must match the order of values in each row.
+
+<ParamField path="header" type="JSONArray" required>
+  A `JSONArray` of column name strings, e.g. `new JSONArray(['id', 'name', 'score'])`.
+</ParamField>
+
+---
+
+### `getRows()`
+
+```ts
+getRows(): JSONArray
+```
+
+Returns the underlying rows array. Each element is itself a `JSONArray` representing one row.
+
+<ResponseField name="return" type="JSONArray">
+  All rows stored in the table. Returns an empty `JSONArray` when no rows have been added.
+</ResponseField>
+
+---
+
+### `getRow(index)`
+
+```ts
+getRow(index: number): JSONArray
+```
+
+Retrieves a single row by its zero-based index.
+
+<ParamField path="index" type="number" required>
+  Zero-based row index.
+</ParamField>
+
+<ResponseField name="return" type="JSONArray">
+  A **new** `JSONArray` copy of the row at the given index.
+</ResponseField>
+
+<Note>
+  `getRow` returns a shallow copy of the row — `new JSONArray(rows.at(index))` — not a reference to the internal array. Mutating the returned value does **not** modify the table's stored data. Use `replaceRow` to update a row in place.
+</Note>
+
+<Warning>
+  Throws `RangeError: Index out of bounds: {index}` when `index >= table.length()`.
+</Warning>
+
+---
+
+### `addRow(row)`
+
+```ts
+addRow(row: JSONArray): void
+```
+
+Appends a single row to the end of the table.
+
+<ParamField path="row" type="JSONArray" required>
+  A `JSONArray` whose elements correspond positionally to the header columns.
+</ParamField>
+
+---
+
+### `addRows(rows)`
+
+```ts
+addRows(rows: JSONArray[]): void
+```
+
+Appends multiple rows in a single call. Each element of `rows` is treated the same as an argument to `addRow`.
+
+<ParamField path="rows" type="JSONArray[]" required>
+  An array of `JSONArray` row objects to append.
+</ParamField>
+
+---
+
+### `popRow()`
+
+```ts
+popRow(): void
+```
+
+Removes the last row from the table. If the table has no rows, this is a no-op.
+
+---
+
+### `replaceRow(index, row)`
+
+```ts
+replaceRow(index: number, row: JSONArray): void
+```
+
+Replaces the row at the given index with a new row array.
+
+<ParamField path="index" type="number" required>
+  Zero-based index of the row to replace.
+</ParamField>
+
+<ParamField path="row" type="JSONArray" required>
+  The replacement row data.
+</ParamField>
+
+---
+
+### `removeRow(index)`
+
+```ts
+removeRow(index: number): void
+```
+
+Removes the row at the given index and collapses the rows array.
+
+<ParamField path="index" type="number" required>
+  Zero-based index of the row to remove.
+</ParamField>
+
+<Warning>
+  Throws `RangeError: Index out of bounds: {index}` when `index >= table.length()`.
+</Warning>
+
+---
+
+### `getColumns()`
+
+```ts
+getColumns(): Array<Column>
+```
+
+Returns a column-oriented view of the table. Each `Column` in the returned array extends `Array<JSONValue>` and has the column's header value at index `0`, followed by the corresponding cell value from each row.
+
+<ResponseField name="return" type="Array<Column>">
+  One `Column` per header entry. Returns an empty array if the header is empty. Each `Column` exposes a `getColumnHeader(): string` helper method.
+</ResponseField>
+
+---
+
+### `length()`
+
+```ts
+length(): number
+```
+
+<ResponseField name="return" type="number">
+  The number of data rows currently in the table (does not count the header).
+</ResponseField>
+
+---
+
+## Inherited from `BaseObject`
+
+| Method | Signature | Description |
+|---|---|---|
+| `getName` | `getName(): string` | Returns `"table"` — set via `Reflect` metadata. |
+| `getEntity` | `getEntity(): string` | Returns `"table"` — the `@entity` discriminator value. |
+| `getMetadata` | `getMetadata(): JSONObject` | Returns the block's metadata map, lazily initialized. |
+| `setMetadata` | `setMetadata(value: JSONObject): void` | Replaces the block's metadata map. |
+
+---
+
+## Epoch Date Column Headers
+
+<Note>
+  Column headers that contain the substring `"epoch"` trigger special date handling during XLSX import and export. On import, ISO 8601 date strings in that column are automatically converted to Unix epoch milliseconds (a `number`). On export, numeric epoch values in those columns are serialized back to ISO 8601 strings. Name your columns accordingly — e.g. `"created_epoch"`, `"updated_epoch"` — to opt in to this automatic conversion.
+</Note>
+
+---
+
+## Usage Example
+
+```ts
+import { Table, Sheet, Workbook } from '@org-quicko/sheet';
+import { JSONArray } from '@org-quicko/core';
+import * as XLSX from 'xlsx';
+
+// ── Build a Table ─────────────────────────────────────────────────────────
+const table = new Table();
+table.setHeader(new JSONArray(['id', 'product', 'revenue', 'created_epoch']));
+
+table.addRow(new JSONArray([1, 'Widget A', 12500, 1704067200000]));
+table.addRow(new JSONArray([2, 'Widget B', 8300,  1704153600000]));
+table.addRow(new JSONArray([3, 'Widget C', 19900, 1704240000000]));
+
+console.log('Row count:', table.length()); // 3
+
+// ── Read a row (copy, not reference) ─────────────────────────────────────
+const row = table.getRow(0);
+console.log('First row:', row); // [1, 'Widget A', 12500, 1704067200000]
+
+// ── Replace and remove rows ───────────────────────────────────────────────
+table.replaceRow(1, new JSONArray([2, 'Widget B v2', 9100, 1704153600000]));
+table.removeRow(2); // removes 'Widget C'
+
+// ── Column-oriented access ────────────────────────────────────────────────
+const columns = table.getColumns();
+columns.forEach((col) => {
+  console.log('Column:', col.getColumnHeader(), '→', col.slice(1));
+});
+
+// ── Export to XLSX ────────────────────────────────────────────────────────
+const sheet = new Sheet();
+sheet.addBlock(table);
+
+const workbook = new Workbook();
+workbook.addSheet(sheet);
+
+const xlsxWb = Workbook.toXlsx(workbook);
+XLSX.writeFile(xlsxWb, './output.xlsx');
+```
