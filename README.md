@@ -55,16 +55,31 @@ in their arrays. The settings list contains the key `currency` with the value
 
 ## Packages
 
-Libraries live under `<language>/lib/<package>`. Sheet Tools lives under
-`nodejs/app` because it is a web application.
+Libraries live under `lib/<language>/<package>`. The Sheet Tools frontend
+lives under `frontend/nextjs/org-quicko-sheet-tools`.
+
+```text
+sheet-json/
+├── lib/
+│   ├── java/
+│   │   ├── org-quicko-sheet-core/
+│   │   └── org-quicko-sheet-generator/
+│   └── nodejs/
+│       ├── org-quicko-sheet-core/
+│       └── org-quicko-sheet-generator/
+├── frontend/
+│   └── nextjs/
+│       └── org-quicko-sheet-tools/
+└── README.md
+```
 
 | Package | Location | Purpose |
 |---|---|---|
-| `in.org.quicko.sheet:core` | [Java library](java/lib/org-quicko-sheet-core/) | Read and update workbooks, sheets, tables, and lists; convert workbook JSON into Java objects and back. |
-| `in.org.quicko.sheet:generator` | [Java generator](java/lib/org-quicko-sheet-generator/) | Generate Java classes and Jackson mixins from JSON Schema through a Maven plugin. |
-| `@org-quicko/sheet` | [Node.js library](nodejs/lib/org-quicko-sheet-core/) | Read and update workbook data through TypeScript classes; convert workbook JSON into class instances and back. |
-| `@org-quicko/sheet-generator` | [Node.js generator](nodejs/lib/org-quicko-sheet-generator/) | Generate TypeScript classes from JSON Schema through the `schema-to-objects` command. |
-| Sheet Tools | [Browser application](nodejs/app/org-quicko-sheet-tools/) | Build workbook schemas and view or edit workbook data in a browser. |
+| `in.org.quicko.sheet:core` | [Java library](lib/java/org-quicko-sheet-core/) | Read and update workbooks, sheets, tables, and lists; convert workbook JSON into Java objects and back. |
+| `in.org.quicko.sheet:generator` | [Java generator](lib/java/org-quicko-sheet-generator/) | Generate Java classes and Jackson mixins from JSON Schema through a Maven plugin. |
+| `@org-quicko/sheet` | [Node.js library](lib/nodejs/org-quicko-sheet-core/) | Read and update workbook data through TypeScript classes; convert workbook JSON into class instances and back. |
+| `@org-quicko/sheet-generator` | [Node.js generator](lib/nodejs/org-quicko-sheet-generator/) | Generate TypeScript classes from JSON Schema through the `schema-to-objects` command. |
+| Sheet Tools | [Browser application](frontend/nextjs/org-quicko-sheet-tools/) | Build workbook schemas and view or edit workbook data in a browser. |
 
 Each library has its own build configuration and published package name.
 Applications continue using the existing Maven coordinates and npm package
@@ -78,10 +93,10 @@ tables, rows, and lists. Application code uses these classes to access sheets
 and blocks and to read or update their values.
 
 For Java, configure the Maven plugin's `schema-to-pojo` goal. Its
-[implementation](java/lib/org-quicko-sheet-generator/src/main/java/in/org/quicko/sheet/generator/mojo/ObjectGeneratorMojo.java)
+[implementation](lib/java/org-quicko-sheet-generator/src/main/java/in/org/quicko/sheet/generator/mojo/ObjectGeneratorMojo.java)
 defines the schema path, Java package, and output-directory parameters. For
 Node.js, follow the
-[generator setup](nodejs/lib/org-quicko-sheet-generator/README.md#configuration-and-setup)
+[generator setup](lib/nodejs/org-quicko-sheet-generator/README.md#configuration-and-setup)
 to run `schema-to-objects`.
 
 Make structural changes in the schema and regenerate the classes. Direct
@@ -91,8 +106,8 @@ check. Then deserialize representative workbook JSON and serialize it again
 to verify the generated name mappings and value conversions.
 
 For the Node.js library's data structure and JSON conversion, read the
-[data model](nodejs/lib/org-quicko-sheet-core/docs/concepts/data-model.mdx)
-and [serialization guide](nodejs/lib/org-quicko-sheet-core/docs/concepts/serialization.mdx).
+[data model](lib/nodejs/org-quicko-sheet-core/docs/concepts/data-model.mdx)
+and [serialization guide](lib/nodejs/org-quicko-sheet-core/docs/concepts/serialization.mdx).
 
 ## Build the libraries
 
@@ -101,8 +116,8 @@ configured in their `pom.xml` files. Install the core library before the
 generator, which depends on it. Run these commands from the repository root:
 
 ```shell
-mvn -f java/lib/org-quicko-sheet-core/pom.xml install -Dgpg.skip=true
-mvn -f java/lib/org-quicko-sheet-generator/pom.xml install -Dgpg.skip=true
+mvn -f lib/java/org-quicko-sheet-core/pom.xml install -Dgpg.skip=true
+mvn -f lib/java/org-quicko-sheet-generator/pom.xml install -Dgpg.skip=true
 ```
 
 `-Dgpg.skip=true` skips release signing for local builds.
@@ -121,7 +136,7 @@ Their `package.json` files define the dependencies and build scripts.
 Sheet Tools is a Next.js application. From the repository root, run:
 
 ```shell
-cd nodejs/app/org-quicko-sheet-tools
+cd frontend/nextjs/org-quicko-sheet-tools
 pnpm install
 pnpm dev
 ```
