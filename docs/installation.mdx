@@ -1,0 +1,104 @@
+---
+title: "Installing @org-quicko/sheet in your TypeScript project"
+sidebarTitle: "Installation"
+description: "Step-by-step instructions to install @org-quicko/sheet, configure TypeScript decorator support, and set up reflect-metadata for your Node.js or browser project."
+---
+
+Getting `@org-quicko/sheet` running in a TypeScript project requires three things: the package itself (along with its bundled dependencies), two TypeScript compiler flags that enable decorator support, and a single `reflect-metadata` import at the top of your application entry point. This page covers each step in full.
+
+### Package installation
+
+Install `@org-quicko/sheet` from the npm registry using your preferred package manager:
+
+<CodeGroup>
+```bash npm
+npm install @org-quicko/sheet
+```
+
+```bash yarn
+yarn add @org-quicko/sheet
+```
+
+```bash pnpm
+pnpm add @org-quicko/sheet
+```
+</CodeGroup>
+
+### Peer dependencies
+
+All required runtime dependencies are declared as `dependencies` in the package manifest, so they are installed automatically. No separate install step is needed. The full list is included here for transparency:
+
+| Package | Version | Purpose |
+|---|---|---|
+| `@org-quicko/core` | `^1.1.0` | Provides `JSONArray`, `JSONObject`, and `JSONValue` types used throughout the library |
+| `class-transformer` | `^0.5.1` | Powers `instanceToPlain` and `plainToInstance` for JSON serialization |
+| `class-validator` | `^0.14.0` | Validates bean properties via decorator-based rules |
+| `reflect-metadata` | `^0.2.2` | Enables decorator metadata emission required by `class-transformer` |
+
+### TypeScript configuration
+
+Sheet.js uses TypeScript decorators and decorator metadata to drive its serialization layer. Add `experimentalDecorators` and `emitDecoratorMetadata` to the `compilerOptions` in your `tsconfig.json`. Setting `useDefineForClassFields` to `false` is also required to prevent the native class-fields proposal from overwriting decorator-applied property descriptors:
+
+```json tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "strict": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "useDefineForClassFields": false,
+    "skipLibCheck": true
+  }
+}
+```
+
+If your project already has a `tsconfig.json`, you only need to add or update the three options listed above — all other existing settings remain unchanged.
+
+### Entry point setup
+
+`reflect-metadata` must be imported **once**, as the very first import in your application entry file, before any Sheet.js class is loaded by the module system. Importing it anywhere else — or importing it after a Sheet.js module — will cause decorator metadata to be missing at runtime, leading to silent serialization failures.
+
+```typescript src/main.ts
+// Must be first — before any other import in the application
+import 'reflect-metadata';
+
+import { Workbook, Sheet, Table, List, Item } from '@org-quicko/sheet';
+import { JSONArray, JSONValue } from '@org-quicko/core';
+
+// Your application code follows
+const workbook = new Workbook();
+```
+
+### Module formats
+
+`@org-quicko/sheet` ships a dual CJS + ESM build. The correct format is selected automatically based on your project's module system — no configuration is needed on your end.
+
+**ESM (recommended for modern Node.js and bundlers):**
+
+```typescript
+import { Workbook, Sheet, Table, List, Item } from '@org-quicko/sheet';
+import { JSONArray, JSONObject, JSONValue } from '@org-quicko/core';
+```
+
+**CJS (for CommonJS environments):**
+
+```typescript
+const { Workbook, Sheet, Table, List, Item } = require('@org-quicko/sheet');
+```
+
+The package also exposes a `./beans` subpath export for importing the data classes directly, without pulling in the full index:
+
+```typescript
+import { Workbook, Sheet, Table, List, Item } from '@org-quicko/sheet/beans';
+```
+
+TypeScript declaration files are located at `dist/types/index.d.ts` for the root export and `dist/types/beans/index.d.ts` for the beans subpath.
+
+### Node.js version requirement
+
+`@org-quicko/sheet` requires **Node.js 18.0.0 or later** is recommended, though the `engines` field in `package.json` declares a minimum of **Node.js >= 8.0.0**. Using a current LTS release ensures full compatibility with the ES2022 compilation target used by the library.
+
+<Tip>
+  See the [Quickstart](/quickstart) page for a complete working example that builds a `Workbook` with a `Table` and `List` block, serializes it to JSON, and exports it to an XLSX buffer.
+</Tip>

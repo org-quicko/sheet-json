@@ -1,0 +1,233 @@
+---
+title: "Item — key-value pair for Sheet.js List blocks"
+sidebarTitle: "Item"
+description: "API reference for the Item class in Sheet.js. Represents a single key-value pair with typed value accessors for boolean, number, and string coercion."
+---
+
+`Item` is the leaf data object in a `List` block. It stores a single key-value pair where the key is always a `string` and the value can be any `JSONValue` — that is, a `string`, `number`, `boolean`, `null`, or a nested object or array. Rather than storing typed values separately, `Item` provides coercion accessor methods (`getBooleanValue`, `getNumberValue`, `getStringValue`) that apply JavaScript's standard type-conversion rules at read time. `Item` is a plain class without `class-transformer` decorators; its serialization and deserialization are handled by the custom `ListTransformer` configured on the `List` class.
+
+## Import
+
+```ts
+import { Item } from '@org-quicko/sheet';
+import { JSONValue } from '@org-quicko/core';
+```
+
+`JSONValue` is defined in `@org-quicko/core` as:
+
+```ts
+type JSONValue = string | number | boolean | null | object | JSONValue[];
+```
+
+---
+
+## Constructor
+
+```ts
+new Item(key: string, value: JSONValue)
+```
+
+Creates a new `Item` with the given key and value. Both fields are stored as private properties and accessed only through the provided getter methods.
+
+<ParamField path="key" type="string" required>
+  The key identifying this item within a `List`. Keys are treated as case-insensitive for lookup operations but are stored with their original casing.
+</ParamField>
+
+<ParamField path="value" type="JSONValue" required>
+  The value associated with the key. Accepts any JSON-compatible value: `string`, `number`, `boolean`, `null`, plain object, or array.
+</ParamField>
+
+---
+
+## Instance Methods
+
+### `getKey()`
+
+```ts
+getKey(): string
+```
+
+<ResponseField name="return" type="string">
+  The key exactly as provided to the constructor.
+</ResponseField>
+
+---
+
+### `getValue()`
+
+```ts
+getValue(): JSONValue
+```
+
+<ResponseField name="return" type="JSONValue">
+  The raw value exactly as provided to the constructor, with no type coercion applied.
+</ResponseField>
+
+---
+
+### `getBooleanValue()`
+
+```ts
+getBooleanValue(): boolean
+```
+
+Coerces the stored value to a `boolean` using JavaScript's `Boolean()` function.
+
+<ResponseField name="return" type="boolean">
+  `false` for `false`, `0`, `""`, `null`, `undefined`, and `NaN`; `true` for everything else.
+</ResponseField>
+
+---
+
+### `getNumberValue()`
+
+```ts
+getNumberValue(): number
+```
+
+Coerces the stored value to a `number` using JavaScript's `Number()` function.
+
+<ResponseField name="return" type="number">
+  The numeric representation of the value. Returns `NaN` if conversion fails — for example, `Number("hello")` returns `NaN`. This method never returns `null`.
+</ResponseField>
+
+<Note>
+  When the value is already a `number`, `getNumberValue()` returns it unchanged. When the value is a numeric string like `"42"`, it is correctly parsed to `42`.
+</Note>
+
+---
+
+### `getStringValue()`
+
+```ts
+getStringValue(): string
+```
+
+Coerces the stored value to a `string` using JavaScript's `String()` function.
+
+<ResponseField name="return" type="string">
+  The string representation. `null` becomes `"null"`, `true` becomes `"true"`, `123` becomes `"123"`, and so on.
+</ResponseField>
+
+---
+
+### `equals(item)`
+
+```ts
+equals(item: Item): boolean
+```
+
+Compares this `Item` to another for logical equality.
+
+<ParamField path="item" type="Item" required>
+  The other `Item` to compare against.
+</ParamField>
+
+<ResponseField name="return" type="boolean">
+  `true` if both items have keys that match **case-insensitively** (`"Status"` equals `"status"`) **and** values that match with strict equality (`===`).
+</ResponseField>
+
+<Note>
+  Key comparison in `equals` is case-insensitive, but value comparison uses strict equality (`===`). Two items with value `42` (number) and `"42"` (string) are **not** equal even if their keys match.
+</Note>
+
+---
+
+## Value Type Examples
+
+```ts
+import { Item } from '@org-quicko/sheet';
+
+// String value
+const strItem = new Item('label', 'Q1 Revenue');
+strItem.getValue();        // 'Q1 Revenue'
+strItem.getStringValue();  // 'Q1 Revenue'
+strItem.getBooleanValue(); // true  (non-empty string)
+strItem.getNumberValue();  // NaN   (not numeric)
+
+// Number value
+const numItem = new Item('count', 4200);
+numItem.getValue();        // 4200
+numItem.getNumberValue();  // 4200
+numItem.getStringValue();  // '4200'
+numItem.getBooleanValue(); // true  (non-zero)
+
+// Boolean value
+const boolItem = new Item('active', false);
+boolItem.getValue();        // false
+boolItem.getBooleanValue(); // false
+boolItem.getStringValue();  // 'false'
+boolItem.getNumberValue();  // 0
+
+// Null value
+const nullItem = new Item('optional', null);
+nullItem.getValue();        // null
+nullItem.getBooleanValue(); // false
+nullItem.getStringValue();  // 'null'
+nullItem.getNumberValue();  // 0
+
+// Numeric string value
+const numStrItem = new Item('score', '98.6');
+numStrItem.getNumberValue();  // 98.6
+numStrItem.getBooleanValue(); // true
+```
+
+---
+
+## Equality Comparison
+
+```ts
+import { Item } from '@org-quicko/sheet';
+
+const a = new Item('Status', 'active');
+const b = new Item('status', 'active'); // key differs only in case
+const c = new Item('status', 'ACTIVE'); // value differs
+
+a.equals(b); // true  — keys match case-insensitively, values match with ===
+a.equals(c); // false — 'active' !== 'ACTIVE'
+```
+
+---
+
+## Serialization Note
+
+<Note>
+  `Item` does not use `class-transformer` decorators (`@Expose`, `@Type`, etc.). Instances are serialized and deserialized by the custom `ListTransformer` (`PlainToInstance` / `InstanceToPlain`) attached to the `List.items` property. You do not need to configure anything extra — simply construct `Item` objects normally and add them to a `List`.
+</Note>
+
+---
+
+## Usage Example
+
+```ts
+import { List, Item } from '@org-quicko/sheet';
+
+const list = new List();
+
+// Add a variety of value types
+list.addItems([
+  new Item('report_title', 'Quarterly Sales'),
+  new Item('quarter',      'Q1 2025'),
+  new Item('total_rows',   8192),
+  new Item('is_final',     true),
+  new Item('notes',        null),
+  new Item('created_epoch', 1704067200000),
+]);
+
+// Retrieve and coerce
+const rowsItem = list.getItem('total_rows');
+if (rowsItem) {
+  console.log(rowsItem.getNumberValue()); // 8192
+  console.log(rowsItem.getStringValue()); // '8192'
+}
+
+const finalItem = list.getItem('is_final');
+if (finalItem) {
+  console.log(finalItem.getBooleanValue()); // true
+}
+
+// Equality check
+const a = new Item('quarter', 'Q1 2025');
+const b = new Item('QUARTER', 'Q1 2025');
+console.log(a.equals(b)); // true — case-insensitive key, exact value
+```

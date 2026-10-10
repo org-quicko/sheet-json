@@ -1,0 +1,229 @@
+---
+title: "Workbook — Sheet.js top-level container class"
+sidebarTitle: "Workbook"
+description: "API reference for the Workbook class in Sheet.js. Holds Sheet objects, supports XLSX import/export, and is the root of the serialization hierarchy."
+---
+
+`Workbook` is the root object in the Sheet.js data model. It holds an ordered collection of `Sheet` instances and acts as the entry point for both programmatic construction and XLSX import/export. Every serialized Sheet.js document maps to a single `Workbook`, with its `@entity` discriminator set to `"workbook"` and its `name` field derived from class-level `Reflect` metadata. The class extends `BaseObject`, which provides metadata storage and entity identification inherited by all Sheet.js objects.
+
+## Import
+
+```ts
+import { Workbook, Sheet } from '@org-quicko/sheet';
+```
+
+---
+
+## Constructor
+
+```ts
+new Workbook()
+```
+
+Creates a new `Workbook` with an empty `sheets` array. The workbook's `name` and `@entity` values are set automatically from `Reflect` metadata (`"workbook"`).
+
+---
+
+## Static Methods
+
+### `Workbook.fromXlsx(buffer)`
+
+```ts
+static fromXlsx(buffer: Buffer): Workbook
+```
+
+Parses a binary XLSX `Buffer` and returns a fully hydrated `Workbook` instance, including all sheets and their blocks. Internally delegates to `WorkbookConverter.toWorkbook`.
+
+<ParamField path="buffer" type="Buffer" required>
+  A Node.js `Buffer` containing the raw bytes of an `.xlsx` file, typically obtained via `fs.readFileSync` or a multipart upload.
+</ParamField>
+
+<ResponseField name="return" type="Workbook">
+  A new `Workbook` instance populated with the sheets parsed from the XLSX file.
+</ResponseField>
+
+<Warning>
+  Throws a `ConverterException` (from `@org-quicko/core`) if the buffer is not a valid XLSX file or if parsing fails at any stage.
+</Warning>
+
+---
+
+### `Workbook.toXlsx(workbook)`
+
+```ts
+static toXlsx(workbook: Workbook): XLSX.WorkBook
+```
+
+Converts a `Workbook` instance into an `XLSX.WorkBook` object (from the [SheetJS `xlsx`](https://sheetjs.com/) library). You can then write this object to disk or a stream using `XLSX.writeFile` or `XLSX.write`.
+
+<ParamField path="workbook" type="Workbook" required>
+  The `Workbook` instance to convert.
+</ParamField>
+
+<ResponseField name="return" type="XLSX.WorkBook">
+  A raw SheetJS workbook object ready for serialization to file.
+</ResponseField>
+
+---
+
+## Instance Methods
+
+### `getSheets()`
+
+```ts
+getSheets(): Array<Sheet>
+```
+
+Returns the full ordered array of `Sheet` objects in the workbook.
+
+<ResponseField name="return" type="Array<Sheet>">
+  All sheets in insertion order. Returns an empty array when none have been added.
+</ResponseField>
+
+---
+
+### `getSheet(index)` / `getSheet(name)`
+
+```ts
+getSheet(index: number): Sheet
+getSheet(name: string): Sheet | null
+```
+
+Overloaded accessor that retrieves a sheet either by its zero-based position or by its name.
+
+<ParamField path="index" type="number">
+  Zero-based index of the sheet to retrieve.
+</ParamField>
+
+<ParamField path="name" type="string">
+  Name of the sheet to retrieve. Matching is **case-insensitive**.
+</ParamField>
+
+<ResponseField name="return (index)" type="Sheet">
+  The `Sheet` at the requested position.
+</ResponseField>
+
+<ResponseField name="return (name)" type="Sheet | null">
+  The first `Sheet` whose name matches, or `null` if no sheet is found.
+</ResponseField>
+
+<Warning>
+  When called with a numeric index that is out of bounds, `getSheet` throws a `RangeError: Index out of bounds: {index}`.
+</Warning>
+
+---
+
+### `addSheet(sheet)`
+
+```ts
+addSheet(sheet: Sheet): void
+```
+
+Appends a `Sheet` to the end of the workbook's sheet list.
+
+<ParamField path="sheet" type="Sheet" required>
+  The `Sheet` instance to append.
+</ParamField>
+
+---
+
+### `replaceSheet(sheet)`
+
+```ts
+replaceSheet(sheet: Sheet): void
+```
+
+Replaces the first existing sheet whose name matches `sheet.getName()` (case-insensitive) with the supplied instance. If no sheet with that name exists, the method returns silently without modifying the workbook.
+
+<ParamField path="sheet" type="Sheet" required>
+  The replacement `Sheet`. Its `name` is used to locate the sheet being replaced.
+</ParamField>
+
+<Note>
+  `replaceSheet` does **not** append the sheet if the name is not found. Use `addSheet` if you want upsert-style behaviour.
+</Note>
+
+---
+
+### `removeSheet(name)`
+
+```ts
+removeSheet(name: string): void
+```
+
+Removes the first sheet whose name matches the given string (case-insensitive) and collapses the array.
+
+<ParamField path="name" type="string" required>
+  The name of the sheet to remove.
+</ParamField>
+
+<Warning>
+  Throws a `RangeError: Sheet with name '{name}' not found` if no matching sheet exists.
+</Warning>
+
+---
+
+### `length()`
+
+```ts
+length(): number
+```
+
+<ResponseField name="return" type="number">
+  The total number of sheets currently in the workbook.
+</ResponseField>
+
+---
+
+## Inherited from `BaseObject`
+
+| Method | Signature | Description |
+|---|---|---|
+| `getName` | `getName(): string` | Returns `"workbook"` — the value set via `Reflect` metadata on the class. |
+| `getEntity` | `getEntity(): string` | Returns `"workbook"` — the `@entity` discriminator used during serialization. |
+| `getMetadata` | `getMetadata(): JSONObject` | Returns the workbook's metadata map. Lazily initialized to an empty `JSONObject`. |
+| `setMetadata` | `setMetadata(value: JSONObject): void` | Replaces the workbook's metadata map entirely. |
+
+`JSONObject` is imported from `@org-quicko/core`.
+
+---
+
+## Usage Example
+
+```ts
+import * as fs from 'fs';
+import { Workbook, Table } from '@org-quicko/sheet';
+import { JSONObject } from '@org-quicko/core';
+
+// ── Import from XLSX ───────────────────────────────────────────────────────
+const buffer = fs.readFileSync('./report.xlsx');
+const workbook = Workbook.fromXlsx(buffer);
+
+console.log(`Loaded ${workbook.length()} sheet(s)`);
+
+// ── Access sheets ──────────────────────────────────────────────────────────
+const firstSheet = workbook.getSheet(0);
+const salesSheet = workbook.getSheet('Sales Summary'); // case-insensitive
+
+// ── Read a block from a sheet ─────────────────────────────────────────────
+if (salesSheet) {
+  const table = salesSheet.getBlock('revenue_table') as Table;
+  if (table) {
+    console.log('Row count:', table.length());
+  }
+}
+
+// ── Build programmatically and export ─────────────────────────────────────
+import { Sheet } from '@org-quicko/sheet';
+import * as XLSX from 'xlsx';
+
+const wb = new Workbook();
+const sheet = new Sheet();
+wb.addSheet(sheet);
+
+// Attach arbitrary metadata
+wb.setMetadata(new JSONObject({ source: 'my-pipeline', version: '2' }));
+
+const xlsxWorkbook = Workbook.toXlsx(wb);
+XLSX.writeFile(xlsxWorkbook, './output.xlsx');
+```

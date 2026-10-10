@@ -1,0 +1,231 @@
+---
+title: "Get started with Sheet.js in minutes"
+sidebarTitle: "Quickstart"
+description: "Learn how to install @org-quicko/sheet, build a Workbook with Table and List blocks, serialize to JSON, and export to XLSX in five steps."
+---
+
+This guide walks you through everything needed to go from a fresh install to a fully working `Workbook`: you will create a `Sheet`, attach a `Table` block containing columnar data and a `List` block containing key-value metadata, serialize the entire structure to plain JSON using `class-transformer`, and finally export it to an XLSX buffer using the built-in `Workbook.toXlsx` helper.
+
+<Steps>
+
+<Step title="Install the package">
+
+Add `@org-quicko/sheet` to your project using your preferred package manager.
+
+<CodeGroup>
+```bash npm
+npm install @org-quicko/sheet
+```
+
+```bash yarn
+yarn add @org-quicko/sheet
+```
+
+```bash pnpm
+pnpm add @org-quicko/sheet
+```
+</CodeGroup>
+
+`@org-quicko/core`, `class-transformer`, `class-validator`, and `reflect-metadata` are bundled as regular dependencies and are installed automatically alongside the package.
+
+</Step>
+
+<Step title="Configure TypeScript">
+
+Sheet.js relies on TypeScript decorators and decorator metadata to power its serialization layer. Both compiler options must be enabled in your project's `tsconfig.json`:
+
+```json tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "strict": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "useDefineForClassFields": false
+  }
+}
+```
+
+Then add `import 'reflect-metadata'` as the very first line of your application entry point, before any Sheet.js import is resolved by the module system:
+
+```typescript src/index.ts
+import 'reflect-metadata';
+
+import { Workbook, Sheet, Table, List, Item } from '@org-quicko/sheet';
+import { JSONArray } from '@org-quicko/core';
+```
+
+</Step>
+
+<Step title="Create a Workbook and Sheet">
+
+A `Workbook` is the top-level container. It holds one or more `Sheet` instances, each of which can contain any number of blocks. Instantiate both and you are ready to add data:
+
+```typescript
+import 'reflect-metadata';
+import { Workbook, Sheet } from '@org-quicko/sheet';
+
+const workbook = new Workbook();
+const sheet = new Sheet();
+```
+
+`Workbook` and `Sheet` both inherit from `BaseObject`, which reads their `name` and `@entity` labels from `Reflect` metadata — no constructor arguments are required.
+
+</Step>
+
+<Step title="Add a Table block">
+
+A `Table` block holds columnar data: a single header row followed by zero or more data rows. Both the header and each data row are `JSONArray` instances whose values map positionally to the header columns.
+
+```typescript
+import 'reflect-metadata';
+import { Workbook, Sheet, Table } from '@org-quicko/sheet';
+import { JSONArray } from '@org-quicko/core';
+
+const workbook = new Workbook();
+const sheet = new Sheet();
+
+// Create the Table block
+const table = new Table();
+
+// Define the column headers
+table.setHeader(new JSONArray(['product', 'quantity', 'unit_price']));
+
+// Add data rows — values must align with header positions
+table.addRow(new JSONArray(['Widget A', 120, 9.99]));
+table.addRow(new JSONArray(['Widget B', 45, 24.50]));
+table.addRow(new JSONArray(['Gadget Pro', 8, 199.00]));
+
+// Attach the table block to the sheet
+sheet.addBlock(table);
+
+console.log(`Row count: ${table.length()}`); // Row count: 3
+```
+
+You can later retrieve a specific row with `table.getRow(index)`, update it with `table.replaceRow(index, row)`, or delete it with `table.removeRow(index)`.
+
+</Step>
+
+<Step title="Add a List block">
+
+A `List` block stores ordered key-value pairs as `Item` instances. Use it on the same sheet as the `Table` to capture report parameters, configuration values, or summary metadata.
+
+```typescript
+import { List, Item } from '@org-quicko/sheet';
+
+// Create the List block
+const list = new List();
+
+// Add key-value items using new Item(key, value)
+list.addItem(new Item('region', 'APAC'));
+list.addItem(new Item('currency', 'USD'));
+list.addItem(new Item('generated_by', 'reporting-service'));
+list.addItem(new Item('version', 2));
+
+// Attach the list block to the same sheet
+sheet.addBlock(list);
+
+// Retrieve a value by key (lookup is case-insensitive)
+const region = list.getItem('region');
+console.log(region?.getValue()); // APAC
+```
+
+`Item` accepts any `JSONValue` as its second argument — strings, numbers, booleans, and `null` are all valid.
+
+</Step>
+
+<Step title="Attach the Sheet to the Workbook">
+
+Once all blocks are in place, push the sheet into the workbook. A workbook can hold any number of sheets, each identified by its index or by name.
+
+```typescript
+// Add the sheet to the workbook
+workbook.addSheet(sheet);
+
+console.log(`Sheet count: ${workbook.length()}`); // Sheet count: 1
+
+// Retrieve by index
+const firstSheet = workbook.getSheet(0);
+```
+
+</Step>
+
+<Step title="Serialize to JSON">
+
+Use `instanceToPlain` from `class-transformer` to convert the `Workbook` into a plain JavaScript object that is safe to pass to `JSON.stringify`, write to a file, or send over an HTTP response. Pass `excludeExtraneousValues: true` so that only properties decorated with `@Expose()` are included in the output.
+
+```typescript
+import { instanceToPlain } from 'class-transformer';
+
+const plain = instanceToPlain(workbook, { excludeExtraneousValues: true });
+
+console.log(JSON.stringify(plain, null, 2));
+```
+
+The resulting payload includes `@entity` discriminator fields on every object so that `Table` and `List` blocks can be correctly reconstructed during deserialization:
+
+```json
+{
+  "@entity": "workbook",
+  "name": "workbook",
+  "sheets": [
+    {
+      "@entity": "sheet",
+      "name": "sheet",
+      "blocks": [
+        {
+          "@entity": "table",
+          "name": "table",
+          "header": ["product", "quantity", "unit_price"],
+          "rows": [
+            ["Widget A", 120, 9.99],
+            ["Widget B", 45, 24.5],
+            ["Gadget Pro", 8, 199]
+          ]
+        },
+        {
+          "@entity": "list",
+          "name": "list",
+          "items": {
+            "region": "APAC",
+            "currency": "USD",
+            "generated_by": "reporting-service",
+            "version": 2
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+</Step>
+
+<Step title="Export to XLSX">
+
+`Workbook.toXlsx` accepts a `Workbook` instance and returns an `XLSX.WorkBook` handle from the [SheetJS](https://sheetjs.com) library. Use the handle directly with any SheetJS utility — for example, `XLSX.write` to produce a binary buffer, or `XLSX.writeFile` to write straight to disk.
+
+```typescript
+import XLSX from 'xlsx';
+import { Workbook } from '@org-quicko/sheet';
+
+// Convert the Workbook instance to an XLSX.WorkBook handle
+const xlsxWorkbook = Workbook.toXlsx(workbook);
+
+// Write to a binary buffer (e.g. to serve over HTTP)
+const buffer = XLSX.write(xlsxWorkbook, { bookType: 'xlsx', type: 'buffer' });
+
+// Or write directly to a file on disk
+XLSX.writeFile(xlsxWorkbook, 'report.xlsx');
+```
+
+To go in the opposite direction — reading an existing `.xlsx` file back into a typed `Workbook` — use `Workbook.fromXlsx(buffer)`, which accepts a `Buffer` and returns a fully hydrated `Workbook` instance.
+
+</Step>
+
+</Steps>
+
+<Note>
+  `import 'reflect-metadata'` must appear as the **first import** in your application entry file, before any Sheet.js class is imported or instantiated. If a decorated class is loaded by the module system before `reflect-metadata` runs, decorator metadata will not be captured and serialization will fail silently.
+</Note>

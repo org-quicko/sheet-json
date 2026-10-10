@@ -1,0 +1,112 @@
+---
+title: "Storing Metadata on Sheet.js Objects"
+sidebarTitle: "Metadata"
+description: "Learn how to attach, read, and serialize custom metadata to any Workbook, Sheet, Table, or List object using the built-in metadata JSONObject field."
+---
+
+Every object in the Sheet.js hierarchy — `Workbook`, `Sheet`, `Table`, and `List` — inherits from `BaseObject`, which provides a built-in `metadata` field. This field is a `JSONObject` that you can use to attach arbitrary key-value annotations to any node in your workbook tree, without changing the data itself. Metadata is serialised as part of the JSON representation, making it a convenient place for report timestamps, version tags, audit fields, and other housekeeping data.
+
+## Setting Metadata
+
+Retrieve the `JSONObject` with `getMetadata()` and call `.set(key, value)` on it to add or update an entry. Alternatively, replace the entire metadata object at once with `setMetadata(jsonObject)`.
+
+```typescript
+import { Workbook, Sheet, Table, List } from '@org-quicko/sheet';
+import { JSONObject } from '@org-quicko/core';
+
+const workbook = new Workbook();
+
+// Set individual keys on the existing metadata object
+workbook.getMetadata().set('generatedAt', '2024-11-15T08:00:00Z');
+workbook.getMetadata().set('generatedBy', 'reporting-service');
+workbook.getMetadata().set('version',     2);
+
+// Or replace the whole metadata object
+const meta = new JSONObject();
+meta.set('environment', 'production');
+meta.set('schemaVersion', '1.4.0');
+workbook.setMetadata(meta);
+```
+
+Metadata can be set on any level of the hierarchy:
+
+```typescript
+const sheet = new Sheet();
+sheet.getMetadata().set('sheetOwner', 'finance-team');
+
+const table = new Table();
+table.getMetadata().set('source', 'erp-export');
+
+const list = new List();
+list.getMetadata().set('lastModified', '2024-11-14T17:30:00Z');
+```
+
+## Reading Metadata
+
+Call `getMetadata()` to get the `JSONObject`, then use `.get(key)` to retrieve a specific value.
+
+```typescript
+const generatedAt = workbook.getMetadata().get('generatedAt');
+console.log(generatedAt); // '2024-11-15T08:00:00Z'
+
+const owner = sheet.getMetadata().get('sheetOwner');
+console.log(owner); // 'finance-team'
+```
+
+If a key has not been set, `.get(key)` returns `undefined`.
+
+## Metadata in JSON Output
+
+When a Sheet.js object is serialised to JSON (for example via `JSON.stringify` or your own serialiser), the metadata field appears as a `"metadata"` property containing all the key-value pairs you set.
+
+```json
+{
+  "@entity": "workbook",
+  "name": "workbook",
+  "metadata": {
+    "generatedAt": "2024-11-15T08:00:00Z",
+    "generatedBy": "reporting-service",
+    "version": 2
+  },
+  "sheets": []
+}
+```
+
+<Note>
+  An empty metadata object `{}` is always included in the serialised JSON even if you never called `setMetadata` or `getMetadata().set(...)`. This is by design — the field is initialised eagerly so downstream consumers can rely on its presence.
+</Note>
+
+## Practical Uses
+
+Metadata is a lightweight way to carry contextual information alongside your spreadsheet content. Common patterns include:
+
+- **Report generation timestamps** — record when a workbook or sheet was produced (`generatedAt`).
+- **Sheet version tags** — track schema versions on individual sheets (`schemaVersion: '2.1'`).
+- **User-defined labels** — attach business labels or cost-centre codes without adding extra columns.
+- **Audit fields** — store the identity of the process or user that created or last modified a block.
+- **Source tracking** — note the upstream system or query that populated a table (`source: 'crm-api'`).
+
+## Metadata in XLSX
+
+Metadata is a JSON-only concept. It is **not** written into the `.xlsx` file when you export with `Workbook.toXlsx`. If you import the exported file back with `Workbook.fromXlsx`, the metadata field on each object will be an empty `JSONObject`.
+
+Persist your metadata separately (for example in a sidecar JSON file or a database record) if you need it to survive the XLSX round-trip.
+
+```typescript
+import { Workbook } from '@org-quicko/sheet';
+import * as XLSX from 'xlsx';
+import * as fs from 'fs';
+
+workbook.getMetadata().set('reportId', 'RPT-2024-001');
+
+// Metadata exists in memory and in JSON serialisation
+console.log(workbook.getMetadata().get('reportId')); // 'RPT-2024-001'
+
+// Export to XLSX — metadata is NOT included in the file
+const xlsxWorkbook = Workbook.toXlsx(workbook);
+XLSX.writeFile(xlsxWorkbook, './report.xlsx');
+
+// Re-import — metadata is gone
+const reimported = Workbook.fromXlsx(fs.readFileSync('./report.xlsx'));
+console.log(reimported.getMetadata().get('reportId')); // undefined
+```

@@ -1,0 +1,133 @@
+---
+title: "SheetJsonEntityType — entity discriminator enum"
+sidebarTitle: "Types"
+description: "API reference for SheetJsonEntityType, the enum used as the @entity discriminator in Sheet.js JSON serialization for Workbook, Sheet, Table, and List objects."
+---
+
+`SheetJsonEntityType` is an enum that defines the string values used as `@entity` discriminators in Sheet.js JSON serialization. Every serialized Sheet.js object carries an `@entity` field whose value matches one of these enum members, allowing `class-transformer` to identify which concrete class to instantiate during deserialization. The standard members — `WORKBOOK`, `SHEET`, `TABLE`, and `LIST` — correspond to the four primary classes in the data model. The `ISSUE_*` members are reserved for internal validation output and mark rows or blocks that failed validation.
+
+## Enum values
+
+```typescript
+export enum SheetJsonEntityType {
+  WORKBOOK            = 'workbook',
+  SHEET               = 'sheet',
+  LIST                = 'list',
+  TABLE               = 'table',
+  ISSUE_ROW           = 'table.issue_row',
+  ISSUE_TABLE         = 'table.issue_table',
+  ISSUE_ROW_FOR_LIST  = 'list.issue_row',
+  ISSUE_TABLE_FOR_LIST = 'list.issue_table'
+}
+```
+
+| Member | Value | Description |
+|---|---|---|
+| `WORKBOOK` | `'workbook'` | Identifies a `Workbook` object. Set by `@Reflect.metadata('@entity', 'workbook')` on the `Workbook` class. |
+| `SHEET` | `'sheet'` | Identifies a `Sheet` object. Set by `@Reflect.metadata('@entity', 'sheet')` on the `Sheet` class. |
+| `TABLE` | `'table'` | Identifies a `Table` block. Used as the discriminator value in `Sheet.blocks`. |
+| `LIST` | `'list'` | Identifies a `List` block. Used as the discriminator value in `Sheet.blocks`. |
+| `ISSUE_ROW` | `'table.issue_row'` | Tags an invalid data row inside a `Table` produced by the Sheet.js validator. |
+| `ISSUE_TABLE` | `'table.issue_table'` | Tags an invalid `Table` block produced by the Sheet.js validator. |
+| `ISSUE_ROW_FOR_LIST` | `'list.issue_row'` | Tags an invalid `Item` row inside a `List` produced by the Sheet.js validator. |
+| `ISSUE_TABLE_FOR_LIST` | `'list.issue_table'` | Tags an invalid `List` block produced by the Sheet.js validator. |
+
+## How @entity is used
+
+Each Sheet.js data class carries `@Reflect.metadata('@entity', <value>)` at the class level. When a plain JSON object is deserialized, `class-transformer` reads the `'@entity'` field to select the correct subclass. This is particularly important for `Sheet.blocks`, which uses a `@Type` decorator with an explicit discriminator configuration:
+
+```typescript
+@Type(() => Block, {
+  keepDiscriminatorProperty: true,
+  discriminator: {
+    property: '@entity',
+    subTypes: [
+      { value: Table, name: SheetJsonEntityType.TABLE },
+      { value: List,  name: SheetJsonEntityType.LIST  },
+    ],
+  },
+})
+blocks?: Array<Block>;
+```
+
+A serialized sheet therefore looks like the following, where each block's `@entity` field drives the polymorphic reconstruction:
+
+```json
+{
+  "@entity": "sheet",
+  "name": "Q1 Sales",
+  "blocks": [
+    {
+      "@entity": "table",
+      "name": "Revenue",
+      "header": ["region", "amount"],
+      "rows": [["APAC", 142000], ["EMEA", 98500]]
+    },
+    {
+      "@entity": "list",
+      "name": "Parameters list",
+      "items": [
+        { "currency": "USD" },
+        { "fiscal_year": "2024" }
+      ]
+    }
+  ]
+}
+```
+
+## Usage example
+
+You can compare the `@entity` field of a plain-serialized object against `SheetJsonEntityType` to verify the type of any Sheet.js entity at runtime.
+
+```typescript
+import { instanceToPlain } from 'class-transformer';
+import { Table, SheetJsonEntityType } from '@org-quicko/sheet';
+
+const table = new Table();
+const plain = instanceToPlain(table, { excludeExtraneousValues: true });
+
+console.log(plain['@entity'] === SheetJsonEntityType.TABLE); // true
+```
+
+You can also use enum values explicitly when constructing raw JSON objects that will be deserialized by Sheet.js, ensuring the discriminator strings remain in sync with the library:
+
+```typescript
+import { SheetJsonEntityType } from '@org-quicko/sheet';
+
+const rawSheet = {
+  '@entity': SheetJsonEntityType.SHEET,
+  name: 'Summary',
+  blocks: [
+    {
+      '@entity': SheetJsonEntityType.TABLE,
+      name: 'Metrics',
+      header: ['kpi', 'value'],
+      rows: [['Revenue', 500000]],
+    },
+  ],
+};
+```
+
+## Import
+
+```typescript
+import { SheetJsonEntityType } from '@org-quicko/sheet';
+```
+
+## ListTransformer (internal)
+
+`PlainToInstance` and `InstanceToPlain` are two `@Transform` functions exported from `@org-quicko/sheet` for use with `class-transformer`. They handle the conversion of a `List`'s `items` array between its plain JSON representation (an array of single-key objects) and its runtime form (an array of `Item` instances). Both functions are used exclusively by the `List` class's `@Transform` decorators and are not intended for direct use in application code.
+
+```typescript
+// Internal usage inside List — shown for reference only
+import { PlainToInstance, InstanceToPlain } from '@org-quicko/sheet';
+
+@Transform(PlainToInstance, { toClassOnly: true })
+@Transform(InstanceToPlain, { toPlainOnly: true })
+items?: Array<Item>;
+```
+
+| Export | Signature | Direction |
+|---|---|---|
+| `PlainToInstance` | `(params: TransformFnParams) => Array<Item> \| undefined` | Plain JSON → `Item[]` (deserialization) |
+| `InstanceToPlain` | `(params: TransformFnParams) => Array<unknown> \| undefined` | `Item[]` → plain JSON (serialization) |

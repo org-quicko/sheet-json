@@ -1,0 +1,97 @@
+---
+title: "Column — vertical column projection from Table.getColumns()"
+sidebarTitle: "Column"
+description: "API reference for the Column class in Sheet.js. Represents a full column including its header and data values, returned by Table.getColumns()."
+---
+
+`Column` is a projection type returned by `Table.getColumns()`. Each `Column` represents one vertical slice of a `Table`: its first element (`column[0]`) is the column's header string taken from the `Table`'s header row, and every subsequent element is the corresponding cell value from each data row. `Column` extends `Array<JSONValue>`, so all standard array operations apply, and `getColumnHeader()` provides a convenient string accessor for the leading header element.
+
+## Constructor
+
+```typescript
+new Column(column: Array<JSONValue>)
+```
+
+Creates a `Column` populated with every element from the provided array. Typically you do not instantiate `Column` manually — `Table.getColumns()` builds and returns `Column` instances for you.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `column` | `Array<JSONValue>` | The values to populate the column with. The first element should be the header string. |
+
+## getColumnHeader(): string
+
+```typescript
+col.getColumnHeader(): string
+```
+
+Returns the header label for this column — that is, `this[0].toString()`. If the first element is falsy (e.g. `null`, `undefined`, or an empty string), the method returns an empty string `''`.
+
+```typescript
+const col = new Column(['product', 'Widget A', 'Widget B']);
+col.getColumnHeader(); // 'product'
+```
+
+## Accessing data values
+
+The layout of a `Column` mirrors how `Table.getColumns()` assembles it:
+
+| Index | Content |
+|---|---|
+| `column[0]` | Header string (the column name from the `Table`'s header row). |
+| `column[1]` | Cell value from data row 0. |
+| `column[2]` | Cell value from data row 1. |
+| `column[n]` | Cell value from data row `n - 1`. |
+
+Use `column.slice(1)` to obtain just the data values without the header element.
+
+## Inherited array methods
+
+`Column` extends `Array<JSONValue>`, so every standard `Array` method is available:
+
+| Method / Property | Description |
+|---|---|
+| `length` | Total number of elements, including the header at index 0. |
+| `slice(start, end)` | Return a portion of the column — use `slice(1)` to skip the header. |
+| `at(index)` | Return the element at a given index (supports negative indexing). |
+| `map(fn)` | Return a new array by applying `fn` to each element. |
+| `filter(fn)` | Return a new array of elements that pass `fn`. |
+| `forEach(fn)` | Execute `fn` for each element. |
+| `indexOf(value)` | Return the first index of `value`, or `-1`. |
+
+## Usage
+
+The most common pattern is to call `table.getColumns()` and then iterate the returned array to process each column independently.
+
+```typescript
+const columns = table.getColumns();
+
+columns.forEach(col => {
+  console.log('Header:', col.getColumnHeader());
+  const values = col.slice(1); // skip header element
+  console.log('Values:', values);
+});
+```
+
+To look up a specific column by name, scan `getColumnHeader()` across the returned array:
+
+```typescript
+const emailCol = table
+  .getColumns()
+  .find(col => col.getColumnHeader() === 'email');
+
+if (emailCol) {
+  const emails = emailCol.slice(1); // all email values
+}
+```
+
+<Note>
+  `Table.getColumns()` constructs fresh `Column` instances on every call — it does not return a cached reference. Mutations to the returned `Column` objects do not affect the underlying `Table` data.
+</Note>
+
+## Import
+
+```typescript
+import { Column } from '@org-quicko/sheet';
+// or from the beans sub-path:
+import { Column } from '@org-quicko/sheet/beans';
+```
