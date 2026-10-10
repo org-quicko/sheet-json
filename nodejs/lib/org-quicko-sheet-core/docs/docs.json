@@ -1,0 +1,79 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "Sheet.js",
+  "theme": "luma",
+  "colors": {
+    "primary": "#2563EB",
+    "light": "#DBEAFE",
+    "dark": "#1E3A8A"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/org-quicko/sheet-js"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/org-quicko/sheet-js"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/data-model",
+              "concepts/json-structure",
+              "concepts/serialization"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/working-with-tables",
+              "guides/working-with-lists",
+              "guides/xlsx-import-export",
+              "guides/metadata"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Data Classes",
+            "pages": [
+              "api/workbook",
+              "api/sheet",
+              "api/table",
+              "api/list",
+              "api/item",
+              "api/row",
+              "api/column"
+            ]
+          },
+          {
+            "group": "Utilities",
+            "pages": [
+              "api/workbook-converter",
+              "api/types"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

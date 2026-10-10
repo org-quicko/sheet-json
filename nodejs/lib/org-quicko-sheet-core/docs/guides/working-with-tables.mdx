@@ -1,0 +1,126 @@
+---
+title: "Working with Table Blocks in Sheet.js"
+sidebarTitle: "Tables"
+description: "Learn how to create, populate, query, and modify Table blocks in Sheet.js, including headers, rows, columns, and row manipulation methods."
+---
+
+A `Table` is the primary columnar data block in Sheet.js. It holds a header row that names each column and an ordered list of data rows, making it the right structure whenever your data fits a grid — think database query results, CSV exports, or any uniform record sets. Each `Table` lives inside a `Sheet`, which in turn belongs to a `Workbook`.
+
+## Creating a Table
+
+Instantiate a `Table` with `new Table()`, set its header using a `JSONArray` of column name strings, then attach it to a sheet with `addBlock`.
+
+```typescript
+import { Workbook, Sheet, Table } from '@org-quicko/sheet';
+import { JSONArray } from '@org-quicko/core';
+
+const workbook = new Workbook();
+const sheet = new Sheet();
+
+const table = new Table();
+table.setHeader(new JSONArray(['id', 'name', 'email']));
+
+sheet.addBlock(table);
+workbook.addSheet(sheet);
+```
+
+## Adding Rows
+
+Use `addRow` to append a single row, or `addRows` to bulk-append multiple rows at once. Each row is a `JSONArray` whose values correspond positionally to the header columns.
+
+```typescript
+import { Table } from '@org-quicko/sheet';
+import { JSONArray } from '@org-quicko/core';
+
+const table = new Table();
+table.setHeader(new JSONArray(['id', 'name', 'email']));
+
+// Add a single row
+table.addRow(new JSONArray([1, 'Alice', 'alice@example.com']));
+
+// Bulk-add multiple rows
+table.addRows([
+  new JSONArray([2, 'Bob',   'bob@example.com']),
+  new JSONArray([3, 'Carol', 'carol@example.com']),
+]);
+```
+
+## Reading Rows and Headers
+
+Retrieve the header with `getHeader()`, all rows with `getRows()`, and a specific row by zero-based index with `getRow(index)`.
+
+```typescript
+const header = table.getHeader();
+console.log(header); // JSONArray ['id', 'name', 'email']
+
+const allRows = table.getRows();
+console.log(allRows.length); // 3
+
+const firstRow = table.getRow(0);
+console.log(firstRow); // JSONArray [1, 'Alice', 'alice@example.com']
+```
+
+<Warning>
+  `getRow(index)` throws a `RangeError` if `index` is greater than or equal to the number of rows. Always check `table.length()` before accessing by index when the bounds are not known in advance.
+</Warning>
+
+## Modifying Rows
+
+Replace a row in place with `replaceRow(index, newRow)`, delete a row by index with `removeRow(index)`, or remove and discard the last row with `popRow()`.
+
+```typescript
+// Replace the row at index 1
+table.replaceRow(1, new JSONArray([2, 'Bobby', 'bobby@example.com']));
+
+// Remove the row at index 0
+table.removeRow(0);
+
+// Drop the last row
+table.popRow();
+```
+
+<Warning>
+  `removeRow(index)` throws a `RangeError` if the index is out of bounds.
+</Warning>
+
+## Working with Columns
+
+`getColumns()` returns an array of `Column` objects, one per header entry. A `Column` extends `Array<JSONValue>`, where the **first element** is the column header and the **remaining elements** are the data values from each row. Use `getColumnHeader()` to read the header string conveniently.
+
+```typescript
+import { Column } from '@org-quicko/sheet';
+
+const columns: Column[] = table.getColumns();
+
+for (const col of columns) {
+  const header = col.getColumnHeader();   // e.g. 'name'
+  const values = col.slice(1);            // data values only
+
+  console.log(`Column: ${header}`);
+  values.forEach((val, i) => console.log(`  Row ${i}: ${val}`));
+}
+```
+
+This is particularly useful when you want to work with a single field across all rows — for example, extracting every email address — without iterating rows manually.
+
+## Epoch Date Columns
+
+Sheet.js recognises any column whose header contains the word `'epoch'` (case-insensitive) as an epoch-millisecond date column. During XLSX **export**, numeric epoch values in that column are automatically converted to ISO 8601 strings. During XLSX **import**, ISO 8601 strings in that column are converted back to epoch milliseconds.
+
+```typescript
+table.setHeader(new JSONArray(['name', 'created_epoch', 'updated_epoch']));
+
+table.addRow(new JSONArray(['Alice', 1700000000000, 1700086400000]));
+```
+
+<Tip>
+  Name every timestamp column with `epoch` somewhere in the header (e.g. `created_epoch`, `last_login_epoch`) to get automatic date conversion with no extra code when reading or writing XLSX files.
+</Tip>
+
+## Getting the Row Count
+
+`length()` returns the total number of data rows in the table, not counting the header.
+
+```typescript
+console.log(table.length()); // 1
+```

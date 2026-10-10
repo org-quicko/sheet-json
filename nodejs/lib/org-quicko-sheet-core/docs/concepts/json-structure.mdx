@@ -1,0 +1,195 @@
+---
+title: "Sheet.js JSON schema: how workbooks serialize to JSON"
+sidebarTitle: "JSON Structure"
+description: "Understand the JSON representation of a Sheet.js Workbook, including the @entity discriminator, sheet blocks, table rows, and list items."
+---
+
+Every Sheet.js object has a canonical JSON shape that `class-transformer` reads and writes via `instanceToPlain` and `plainToInstance`. Knowing this shape lets you inspect serialized payloads, write tests against raw JSON, store workbooks in databases, and build interoperability with systems that do not use the Sheet.js SDK directly.
+
+## Workbook JSON
+
+A serialized `Workbook` is a JSON object with four top-level keys. The `@entity` field is the discriminator that identifies the object type; `name` carries the workbook's display name; `metadata` holds any user-defined key-value annotations; and `sheets` is an ordered array of `Sheet` objects.
+
+```json
+{
+  "@entity": "workbook",
+  "name": "workbook",
+  "metadata": {},
+  "sheets": []
+}
+```
+
+| Key | Type | Source |
+|---|---|---|
+| `@entity` | `"workbook"` | `BaseObject.getEntity()` via `@Reflect.metadata('@entity', 'workbook')` |
+| `name` | `string` | `BaseObject.getName()` via `@Reflect.metadata('name', 'workbook')` |
+| `metadata` | `object` | `BaseObject.getMetadata()` — empty `{}` when unset |
+| `sheets` | `Sheet[]` | `Workbook.sheets` array |
+
+## Sheet JSON
+
+Each entry in the `sheets` array is a `Sheet` object. Its `blocks` array holds the block objects that belong to this sheet, identified individually by their own `@entity` fields.
+
+```json
+{
+  "@entity": "sheet",
+  "name": "Q1 Report",
+  "metadata": {},
+  "blocks": []
+}
+```
+
+| Key | Type | Description |
+|---|---|---|
+| `@entity` | `"sheet"` | Identifies the object as a `Sheet` |
+| `name` | `string` | Sheet display name (used as the Excel tab name during XLSX export, trimmed to 31 characters) |
+| `metadata` | `object` | User-defined sheet-level annotations |
+| `blocks` | `Block[]` | Ordered array of `Table` and/or `List` block objects |
+
+## Table block JSON
+
+A `Table` block serializes its column names into a flat `header` array and its row data into a nested `rows` array. Each inner array in `rows` holds cell values in the same order as `header`.
+
+```json
+{
+  "@entity": "table",
+  "name": "Revenue Table",
+  "metadata": {},
+  "header": ["id", "product", "price"],
+  "rows": [
+    [1, "Widget A", 9.99],
+    [2, "Widget B", 14.99],
+    [3, "Widget C", 4.49]
+  ]
+}
+```
+
+| Key | Type | Description |
+|---|---|---|
+| `@entity` | `"table"` | Discriminator — tells `class-transformer` to instantiate `Table` |
+| `name` | `string` | Block display name (also written as the first row in the XLSX sheet) |
+| `metadata` | `object` | User-defined block-level annotations |
+| `header` | `JSONValue[]` | Flat array of column name strings |
+| `rows` | `JSONValue[][]` | Array of row arrays; each inner array aligns to `header` by position |
+
+Cell values in `rows` can be `string`, `number`, `boolean`, or `null`. Columns whose header name contains the substring `'epoch'` receive special handling during XLSX import/export: epoch timestamps (milliseconds) are converted to and from ISO 8601 date strings automatically.
+
+## List block JSON
+
+A `List` block serializes its items as an array of **single-key objects** — each object contains exactly one key-value pair. This compact format is deliberately different from `[{"key": "...", "value": "..."}]`; the key is the object property name and the value is the property value.
+
+```json
+{
+  "@entity": "list",
+  "name": "config list",
+  "metadata": {},
+  "items": [
+    { "environment": "production" },
+    { "version": "3.1.0" },
+    { "max_retries": 5 },
+    { "debug_mode": false }
+  ]
+}
+```
+
+| Key | Type | Description |
+|---|---|---|
+| `@entity` | `"list"` | Discriminator — tells `class-transformer` to instantiate `List` |
+| `name` | `string` | Block display name; **must end with `'list'`** (case-insensitive) for XLSX import to treat the block as a `List` |
+| `metadata` | `object` | User-defined block-level annotations |
+| `items` | `{ [key: string]: JSONValue }[]` | Each element is a single-key object mapping one key to its value |
+
+The `name` constraint for XLSX import comes from `WorkbookConverter.parseBlock()`, which inspects the first cell of a block range: if `name.toLowerCase().endsWith('list')` is `true`, the block is parsed as a `List`; otherwise it is parsed as a `Table`.
+
+## The @entity discriminator
+
+The `@entity` property is the mechanism that makes polymorphic deserialization possible. When `class-transformer` processes the `blocks` array inside a `Sheet`, it reads the `@entity` field of each plain object and decides which constructor to call:
+
+```
+blocks[n]["@entity"] === "table"  →  instantiate Table
+blocks[n]["@entity"] === "list"   →  instantiate List
+```
+
+This mapping is declared in `Sheet` via a `@Type` discriminator:
+
+```typescript
+@Type(() => Block, {
+  keepDiscriminatorProperty: true,
+  discriminator: {
+    property: '@entity',
+    subTypes: [
+      { value: Table, name: SheetJsonEntityType.TABLE },  // 'table'
+      { value: List,  name: SheetJsonEntityType.LIST  },  // 'list'
+    ],
+  },
+})
+blocks?: Array<Block>;
+```
+
+The `SheetJsonEntityType` enum defines the complete set of recognized entity strings:
+
+```typescript
+export enum SheetJsonEntityType {
+  WORKBOOK            = 'workbook',
+  SHEET               = 'sheet',
+  LIST                = 'list',
+  TABLE               = 'table',
+  ISSUE_ROW           = 'table.issue_row',
+  ISSUE_TABLE         = 'table.issue_table',
+  ISSUE_ROW_FOR_LIST  = 'list.issue_row',
+  ISSUE_TABLE_FOR_LIST = 'list.issue_table',
+}
+```
+
+The four `issue_*` variants are reserved for validation-error payloads and are not produced by normal serialization.
+
+`keepDiscriminatorProperty: true` ensures that the `@entity` string is retained on the deserialized instance so that a subsequent `instanceToPlain` call can round-trip the value back to JSON without losing the discriminator.
+
+## A complete workbook JSON example
+
+The following JSON object represents a workbook with one sheet that contains both a `Table` block and a `List` block. This is the exact shape produced by calling `instanceToPlain(workbook, { excludeExtraneousValues: true })`.
+
+```json
+{
+  "@entity": "workbook",
+  "name": "workbook",
+  "metadata": {},
+  "sheets": [
+    {
+      "@entity": "sheet",
+      "name": "Q1 Report",
+      "metadata": {},
+      "blocks": [
+        {
+          "@entity": "table",
+          "name": "Revenue Table",
+          "metadata": {},
+          "header": ["id", "product", "price", "created_epoch"],
+          "rows": [
+            [1, "Widget A", 9.99, 1704067200000],
+            [2, "Widget B", 14.99, 1706745600000],
+            [3, "Widget C", 4.49, 1709251200000]
+          ]
+        },
+        {
+          "@entity": "list",
+          "name": "Report Config list",
+          "metadata": {},
+          "items": [
+            { "generated_by": "analytics-service" },
+            { "period": "Q1-2024" },
+            { "currency": "USD" },
+            { "include_tax": true }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+Points worth noting in this example:
+
+- The `Table` block has a `created_epoch` column; during XLSX export the converter will automatically convert those millisecond timestamps to ISO 8601 strings in the spreadsheet cells.
+- The `List` block name ends with `'list'` (case-insensitively), which is the cue the XLSX importer uses to parse the block as a `List` rather than a `Table`.
+- The `metadata` field is an empty object `{}` on every node; it is always present in the serialized form because `@Expose({ name: 'metadata' })` is declared on `BaseObject`.

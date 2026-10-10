@@ -1,0 +1,128 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "Sheet.js",
+  "projectDescription": "A TypeScript toolkit providing a spreadsheet-like data structure (Workbook → Sheet → Block → Table/List) with JSON serialization, XLSX import/export, and class-transformer integration for modern web and Node.js applications.",
+  "theme": "luma",
+  "primaryColor": "#2563EB",
+  "lightColor": "#DBEAFE",
+  "darkColor": "#1E3A8A",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/data-model",
+              "concepts/json-structure",
+              "concepts/serialization"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/working-with-tables",
+              "guides/working-with-lists",
+              "guides/xlsx-import-export",
+              "guides/metadata"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Data Classes",
+            "pages": [
+              "api/workbook",
+              "api/sheet",
+              "api/table",
+              "api/list",
+              "api/item",
+              "api/row",
+              "api/column"
+            ]
+          },
+          {
+            "group": "Utilities",
+            "pages": [
+              "api/workbook-converter",
+              "api/types"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Hierarchical spreadsheet-like data model: Workbook → Sheet → Block (Table | List)",
+    "JSON-native serialization and deserialization via class-transformer",
+    "XLSX import and export via WorkbookConverter",
+    "Table blocks with typed header/row access and column projection",
+    "List blocks with key-value Item storage and case-insensitive lookup",
+    "Metadata support on all data objects",
+    "Date/epoch conversion for columns with 'epoch' in the header name",
+    "CJS and ESM dual package output with TypeScript type declarations",
+    "Discriminator-based polymorphic deserialization for Block subtypes"
+  ],
+  "publicApiSurface": [
+    "Workbook",
+    "Workbook.getSheets()",
+    "Workbook.getSheet(index: number | name: string)",
+    "Workbook.addSheet(sheet: Sheet)",
+    "Workbook.replaceSheet(sheet: Sheet)",
+    "Workbook.removeSheet(name: string)",
+    "Workbook.fromXlsx(buffer: Buffer)",
+    "Workbook.toXlsx(workbook: Workbook)",
+    "Sheet",
+    "Sheet.getBlocks()",
+    "Sheet.getBlock(index: number | name: string)",
+    "Sheet.addBlock(block: Block)",
+    "Sheet.replaceBlock(block: Block)",
+    "Sheet.removeBlock(name: string)",
+    "Table",
+    "Table.getHeader()",
+    "Table.setHeader(header: JSONArray)",
+    "Table.getRows()",
+    "Table.getRow(index: number)",
+    "Table.addRow(row: JSONArray)",
+    "Table.addRows(rows: JSONArray[])",
+    "Table.replaceRow(index: number, row: JSONArray)",
+    "Table.removeRow(index: number)",
+    "Table.popRow()",
+    "Table.getColumns()",
+    "Table.length()",
+    "List",
+    "List.getItems()",
+    "List.getItem(key: string)",
+    "List.addItem(item: Item)",
+    "List.addItems(items: Item[])",
+    "List.replaceItem(item: Item)",
+    "List.removeItem(index: number | key: string)",
+    "List.length()",
+    "Item",
+    "Item.getKey()",
+    "Item.getValue()",
+    "Item.getBooleanValue()",
+    "Item.getNumberValue()",
+    "Item.getStringValue()",
+    "Item.equals(item: Item)",
+    "Row",
+    "Column",
+    "Column.getColumnHeader()",
+    "WorkbookConverter",
+    "WorkbookConverter.toWorkbook(buffer, Class)",
+    "WorkbookConverter.toXlsx(workbook)",
+    "SheetJsonEntityType (enum)"
+  ]
+}

@@ -1,0 +1,198 @@
+---
+title: "Sheet — named tab container for Block objects"
+sidebarTitle: "Sheet"
+description: "API reference for the Sheet class in Sheet.js. Holds Table and List blocks, with polymorphic deserialization via the @entity discriminator field."
+---
+
+`Sheet` represents a single tab inside a `Workbook`. It holds an ordered collection of `Block` objects, each of which is either a `Table` or a `List`. During JSON deserialization, Sheet.js reads the `@entity` field on each block entry and instantiates the appropriate subclass — this polymorphic dispatch is handled automatically by the `class-transformer` discriminator configured on the `blocks` property. You typically obtain a `Sheet` from `Workbook.getSheet()` or construct one directly when building a workbook programmatically.
+
+## Import
+
+```ts
+import { Sheet, Table, List } from '@org-quicko/sheet';
+```
+
+---
+
+## Constructor
+
+```ts
+new Sheet()
+```
+
+Creates a new `Sheet` with an empty `blocks` array. The sheet's `name` and `@entity` values (`"sheet"`) are sourced from `Reflect` metadata on the class.
+
+---
+
+## Instance Methods
+
+### `getBlocks()`
+
+```ts
+getBlocks(): Array<Block>
+```
+
+Returns the full ordered array of `Block` objects (either `Table` or `List` instances) attached to this sheet.
+
+<ResponseField name="return" type="Array<Block>">
+  All blocks in insertion order. Returns an empty array when none have been added.
+</ResponseField>
+
+---
+
+### `getBlock(index)` / `getBlock(name)`
+
+```ts
+getBlock(index: number): Block
+getBlock(name: string): Block | null
+```
+
+Overloaded accessor that retrieves a block by its zero-based position or by its name.
+
+<ParamField path="index" type="number">
+  Zero-based index of the block to retrieve.
+</ParamField>
+
+<ParamField path="name" type="string">
+  Name of the block to find. Matching is **case-insensitive**.
+</ParamField>
+
+<ResponseField name="return (index)" type="Block">
+  The `Block` at the requested index.
+</ResponseField>
+
+<ResponseField name="return (name)" type="Block | null">
+  The first `Block` whose name matches, or `null` if no block is found.
+</ResponseField>
+
+<Warning>
+  When called with a numeric index that is out of bounds, `getBlock` throws a `RangeError: Index out of bounds: {index}`.
+</Warning>
+
+---
+
+### `addBlock(block)`
+
+```ts
+addBlock(block: Block): void
+```
+
+Appends a `Block` to the end of the sheet's block list.
+
+<ParamField path="block" type="Block" required>
+  A `Table` or `List` instance to append.
+</ParamField>
+
+---
+
+### `replaceBlock(block)`
+
+```ts
+replaceBlock(block: Block): void
+```
+
+Replaces the first existing block whose name matches `block.getName()` (case-insensitive) with the supplied instance. If no matching block is found, the method returns silently without modifying the sheet.
+
+<ParamField path="block" type="Block" required>
+  The replacement block. Its `name` determines which existing block is replaced.
+</ParamField>
+
+<Note>
+  `replaceBlock` does **not** append the block if the name is not found. Use `addBlock` for that.
+</Note>
+
+---
+
+### `removeBlock(name)`
+
+```ts
+removeBlock(name: string): void
+```
+
+Removes the first block whose name matches the given string (case-insensitive). If no matching block exists, the method returns silently — **no error is thrown**.
+
+<ParamField path="name" type="string" required>
+  The name of the block to remove.
+</ParamField>
+
+<Note>
+  Unlike `Workbook.removeSheet`, `removeBlock` does not throw a `RangeError` when the name is not found. It fails silently.
+</Note>
+
+---
+
+### `length()`
+
+```ts
+length(): number
+```
+
+<ResponseField name="return" type="number">
+  The total number of blocks currently in the sheet.
+</ResponseField>
+
+---
+
+## Inherited from `BaseObject`
+
+| Method | Signature | Description |
+|---|---|---|
+| `getName` | `getName(): string` | Returns `"sheet"` — the value set via `Reflect` metadata on the class. |
+| `getEntity` | `getEntity(): string` | Returns `"sheet"` — the `@entity` discriminator used during serialization. |
+| `getMetadata` | `getMetadata(): JSONObject` | Returns the sheet's metadata map. Lazily initialized to an empty `JSONObject`. |
+| `setMetadata` | `setMetadata(value: JSONObject): void` | Replaces the sheet's metadata map entirely. |
+
+---
+
+## The `@entity` Discriminator
+
+When Sheet.js deserializes a workbook from JSON or XLSX, each object in the `blocks` array must carry an `@entity` field set to either `"table"` or `"list"`. Sheet uses this field as a discriminator to instantiate the correct subclass:
+
+| `@entity` value | Instantiated class |
+|---|---|
+| `"table"` | `Table` |
+| `"list"` | `List` |
+
+<Note>
+  The `keepDiscriminatorProperty: true` option means the `@entity` field is preserved on deserialized instances so it can be round-tripped back to JSON without data loss.
+</Note>
+
+---
+
+## Usage Example
+
+```ts
+import { Workbook, Sheet, Table, List } from '@org-quicko/sheet';
+import { JSONArray } from '@org-quicko/core';
+import * as fs from 'fs';
+
+// ── Build a sheet programmatically ────────────────────────────────────────
+const sheet = new Sheet();
+
+const table = new Table();
+table.setHeader(new JSONArray(['id', 'name', 'amount']));
+table.addRow(new JSONArray([1, 'Alice', 4200]));
+table.addRow(new JSONArray([2, 'Bob', 3800]));
+sheet.addBlock(table);
+
+const list = new List();
+// ... add items to list
+sheet.addBlock(list);
+
+console.log(`Sheet has ${sheet.length()} block(s)`);
+
+// ── Read a sheet from an XLSX file ────────────────────────────────────────
+const buffer = fs.readFileSync('./report.xlsx');
+const workbook = Workbook.fromXlsx(buffer);
+const loadedSheet = workbook.getSheet(0);
+
+const revenueBlock = loadedSheet.getBlock('revenue_table'); // case-insensitive
+if (revenueBlock instanceof Table) {
+  console.log('Rows:', revenueBlock.length());
+}
+
+// ── Iterate all blocks ────────────────────────────────────────────────────
+loadedSheet.getBlocks().forEach((block) => {
+  console.log(block.getEntity(), block.getName());
+});
+```
