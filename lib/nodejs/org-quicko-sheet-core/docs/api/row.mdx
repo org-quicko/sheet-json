@@ -1,0 +1,63 @@
+---
+title: "Row — typed array for Table row data in Sheet.js"
+sidebarTitle: "Row"
+description: "API reference for the Row class in Sheet.js. A thin JSONArray subclass that represents a single data row in a Sheet.js Table block."
+---
+
+`Row` is a lightweight subclass of `JSONArray` (from `@org-quicko/core`) that represents a single data row in a `Table`. It carries the same positional values that correspond to the `Table`'s header columns. While `Table.getRow()` returns a plain `JSONArray` copy, you can construct a `Row` directly when you want an explicitly typed value. `Row` is also used internally by `WorkbookConverter` during XLSX parsing.
+
+## Constructor
+
+```typescript
+new Row(row: Array<JSONValue>)
+```
+
+Creates a `Row` populated with every element from the provided array. All elements are spread into the underlying `JSONArray` via `push`, so the resulting instance is a live array with standard integer indexing.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `row` | `Array<JSONValue>` | The values to populate the row with, in column order. |
+
+## Inherited array methods
+
+`Row` extends `JSONArray`, which itself extends `Array<JSONValue>`. Every standard `Array` method is available on a `Row` instance:
+
+| Method / Property | Description |
+|---|---|
+| `length` | Number of elements in the row. |
+| `push(...items)` | Append one or more values to the end of the row. |
+| `pop()` | Remove and return the last value. |
+| `at(index)` | Return the element at a given index (supports negative indexing). |
+| `map(fn)` | Return a new array by applying `fn` to every element. |
+| `filter(fn)` | Return a new array containing only elements that pass `fn`. |
+| `slice(start, end)` | Return a shallow copy of a portion of the row. |
+| `forEach(fn)` | Execute `fn` for each element. |
+| `indexOf(value)` | Return the first index of `value`, or `-1`. |
+
+## Usage
+
+Rows are most commonly encountered when building or reading `Table` data. `Table.addRow()` accepts a `JSONArray`, so you can pass either a `JSONArray` or a `Row` — both work because `Row` extends `JSONArray`. `Table.getRow(index)` returns a new `JSONArray` copy of the stored row.
+
+```typescript
+import { Row } from '@org-quicko/sheet';
+import { JSONArray } from '@org-quicko/core';
+
+// Rows are usually created with JSONArray for addRow
+const row = new JSONArray(['Alice', 95, true]);
+table.addRow(row);
+
+// Row can also be constructed directly
+const typedRow = new Row(['Bob', 88, false]);
+```
+
+<Note>
+  `Table.addRow()` expects a `JSONArray`, and `Row` satisfies that contract because it extends `JSONArray`. `Table.getRow(index)` returns a `new JSONArray(...)` copy — not a `Row` instance — so the returned object does not carry the `Row` class metadata.
+</Note>
+
+## Import
+
+```typescript
+import { Row } from '@org-quicko/sheet';
+// or from the beans sub-path:
+import { Row } from '@org-quicko/sheet/beans';
+```

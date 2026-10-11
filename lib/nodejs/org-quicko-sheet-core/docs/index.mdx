@@ -1,0 +1,99 @@
+---
+title: "Sheet.js: Spreadsheet-Like Data Structures for TypeScript"
+sidebarTitle: "Home"
+description: "Sheet.js is a TypeScript toolkit for building and manipulating spreadsheet-like data structures in JSON, with XLSX import/export and class-transformer integration."
+---
+
+Sheet.js gives you a structured, code-first way to work with spreadsheet data in TypeScript and Node.js. Model your data as a `Workbook` containing `Sheet` objects, each holding `Table` blocks (columnar data with typed headers and rows) and `List` blocks (key-value item stores). Everything serializes cleanly to and from JSON, and round-trips through `.xlsx` files without losing structure.
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="bolt" href="/quickstart">
+    Create your first Workbook, add a Table, and serialize to JSON in under 5 minutes.
+  </Card>
+  <Card title="Data Model" icon="sitemap" href="/concepts/data-model">
+    Understand the Workbook → Sheet → Block hierarchy and how Tables and Lists differ.
+  </Card>
+  <Card title="XLSX Import & Export" icon="file-excel" href="/guides/xlsx-import-export">
+    Read spreadsheet files into a Workbook and write Workbooks back to .xlsx.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/workbook">
+    Full method signatures and parameter docs for every public class.
+  </Card>
+</CardGroup>
+
+## Why Sheet.js?
+
+Most applications that handle spreadsheet data either pull it into raw arrays and lose structure, or couple tightly to file-format-specific libraries. Sheet.js provides a clean middle layer:
+
+<CardGroup cols={2}>
+  <Card title="JSON-native" icon="brackets-curly">
+    The entire data model serializes to plain JSON. Share, store, or transmit spreadsheet data with any transport or database.
+  </Card>
+  <Card title="Typed hierarchy" icon="layer-group">
+    Named Workbooks, Sheets, Tables, and Lists — no magic indices, no ambiguity about what data lives where.
+  </Card>
+  <Card title="XLSX round-trip" icon="arrows-rotate">
+    Parse `.xlsx` files into the structured model and write them back out. Epoch date columns are converted automatically.
+  </Card>
+  <Card title="class-transformer ready" icon="wand-magic-sparkles">
+    Built on `class-transformer` decorators, so `plainToInstance` and `instanceToPlain` work out of the box.
+  </Card>
+</CardGroup>
+
+## How it works
+
+<Steps>
+  <Step title="Install the package">
+    Add `@org-quicko/sheet` to your project with npm, yarn, or pnpm.
+
+    ```bash
+    npm install @org-quicko/sheet
+    ```
+  </Step>
+  <Step title="Build your data model">
+    Construct a `Workbook`, add `Sheet` objects, and populate them with `Table` or `List` blocks.
+
+    ```typescript
+    import { Workbook, Sheet, Table } from '@org-quicko/sheet';
+    import { JSONArray } from '@org-quicko/core';
+
+    const workbook = new Workbook();
+    const sheet = new Sheet();
+    const table = new Table();
+
+    table.setHeader(new JSONArray(['name', 'score']));
+    table.addRow(new JSONArray(['Alice', 95]));
+
+    sheet.addBlock(table);
+    workbook.addSheet(sheet);
+    ```
+  </Step>
+  <Step title="Serialize to JSON">
+    Use `instanceToPlain` from `class-transformer` to convert to a portable JSON object.
+
+    ```typescript
+    import { instanceToPlain } from 'class-transformer';
+
+    const json = instanceToPlain(workbook);
+    console.log(JSON.stringify(json, null, 2));
+    ```
+  </Step>
+  <Step title="Import or export XLSX">
+    Use the static helpers on `Workbook` to read and write `.xlsx` files directly.
+
+    ```typescript
+    import fs from 'fs';
+
+    // Import
+    const buffer = fs.readFileSync('report.xlsx');
+    const wb = Workbook.fromXlsx(buffer);
+
+    // Export
+    const xlsxWorkbook = Workbook.toXlsx(wb);
+    ```
+  </Step>
+</Steps>
+
+<Note>
+  Sheet.js requires Node.js 8 or later and TypeScript 5+. It ships dual CJS and ESM builds so it works in both CommonJS and ESM projects.
+</Note>

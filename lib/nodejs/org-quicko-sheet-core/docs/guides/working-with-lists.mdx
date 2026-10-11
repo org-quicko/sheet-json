@@ -1,0 +1,138 @@
+---
+title: "Working with List Blocks in Sheet.js"
+sidebarTitle: "Lists"
+description: "Learn how to use List blocks and Item objects in Sheet.js for key-value data storage, including adding, retrieving, replacing, and removing items."
+---
+
+A `List` is Sheet.js's key-value block type. Where a `Table` models uniform rows of columnar data, a `List` is ideal for heterogeneous records: configuration settings, report summaries, metadata fields, or any collection of named values that don't share a schema. Each entry in a `List` is an `Item` — a typed key-value pair that can hold any `JSONValue`.
+
+## Creating a List
+
+Instantiate a `List` with `new List()` and attach it to a sheet with `addBlock`. You can give it any name, but if the block name ends with `'list'` (case-insensitive), the XLSX converter will automatically detect it as a `List` block when importing — see [XLSX Import & Export](/guides/xlsx-import-export) for details.
+
+```typescript
+import { Workbook, Sheet, List } from '@org-quicko/sheet';
+
+const workbook = new Workbook();
+const sheet = new Sheet();
+
+const summary = new List();
+sheet.addBlock(summary);
+workbook.addSheet(sheet);
+```
+
+## Adding Items
+
+Construct an `Item` with a string key and any `JSONValue` — string, number, boolean, or `null`. Add a single item with `addItem`, or supply multiple items at once with `addItems`.
+
+```typescript
+import { List } from '@org-quicko/sheet';
+import { Item } from '@org-quicko/sheet';
+
+const config = new List();
+
+// Individual additions
+config.addItem(new Item('environment', 'production'));
+config.addItem(new Item('version',     3));
+config.addItem(new Item('debugMode',   false));
+config.addItem(new Item('notes',       null));
+
+// Bulk addition
+config.addItems([
+  new Item('owner',    'engineering-team'),
+  new Item('maxRetry', 5),
+]);
+```
+
+`JSONValue` encompasses `string | number | boolean | null | JSONObject | JSONArray`, giving you full flexibility for any scalar or structured value.
+
+## Retrieving Items
+
+Retrieve a single item by its key with `getItem(key)`. The lookup is **case-insensitive**, so `'environment'`, `'Environment'`, and `'ENVIRONMENT'` all resolve to the same item. The method returns `null` when no match is found. Use `getItems()` to retrieve all items as an ordered array.
+
+```typescript
+// Case-insensitive key lookup
+const env = config.getItem('environment');
+console.log(env?.getValue()); // 'production'
+
+const same = config.getItem('ENVIRONMENT');
+console.log(same?.getValue()); // 'production'
+
+// Not found
+const missing = config.getItem('nonExistent');
+console.log(missing); // null
+
+// All items
+const allItems = config.getItems();
+allItems.forEach(item => {
+  console.log(`${item.getKey()}: ${item.getValue()}`);
+});
+```
+
+<Note>
+  When multiple items share the same key, `getItem` returns the **first** match in insertion order.
+</Note>
+
+## Item Value Accessors
+
+`Item` provides typed accessor methods that coerce the stored value without requiring you to cast it manually.
+
+```typescript
+const versionItem = new Item('version', 3);
+
+versionItem.getValue();        // 3         (JSONValue — raw)
+versionItem.getStringValue();  // '3'       (String coercion)
+versionItem.getNumberValue();  // 3         (Number coercion; NaN if not numeric)
+versionItem.getBooleanValue(); // true      (Boolean coercion)
+
+const debugItem = new Item('debugMode', false);
+debugItem.getBooleanValue();   // false
+
+const unknownItem = new Item('code', 'abc');
+unknownItem.getNumberValue();  // NaN
+```
+
+## Replacing and Removing Items
+
+Use `replaceItem(item)` to swap out an existing item for a new one with the same key. If no item with that key exists in the list, the call is silently ignored — it does **not** insert a new item.
+
+```typescript
+// Replaces the 'version' item in place
+config.replaceItem(new Item('version', 4));
+
+// No-op — 'nonExistent' key is not in the list
+config.replaceItem(new Item('nonExistent', 'value'));
+console.log(config.getItem('nonExistent')); // null
+```
+
+Remove an item by its zero-based position with `removeItem(index: number)`, or remove all items matching a key with `removeItem(key: string)`. The key-based overload is case-insensitive and removes **all** items that match.
+
+```typescript
+// Remove by index (removes the item at position 0)
+config.removeItem(0);
+
+// Remove all items whose key matches 'debugMode' (case-insensitive)
+config.removeItem('debugMode');
+config.removeItem('DEBUGMODE'); // same effect
+```
+
+## Checking Equality
+
+`item.equals(otherItem)` returns `true` when both the key (compared case-insensitively) and the value (compared by strict equality) match.
+
+```typescript
+const a = new Item('Status', 'active');
+const b = new Item('status', 'active');
+const c = new Item('status', 'inactive');
+
+a.equals(b); // true  — keys match case-insensitively, values match
+a.equals(c); // false — values differ
+```
+
+## Getting the Item Count
+
+`length()` returns the total number of items currently in the list.
+
+```typescript
+console.log(config.length()); // e.g. 5
+```

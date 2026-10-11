@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sheet-tools.quicko.org.in/sitemap.xml

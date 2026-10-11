@@ -1,0 +1,173 @@
+---
+title: "WorkbookConverter — XLSX to Workbook conversion utility"
+sidebarTitle: "WorkbookConverter"
+description: "API reference for WorkbookConverter in Sheet.js. Converts XLSX file buffers to typed Workbook instances and serializes Workbooks back to XLSX format."
+---
+
+`WorkbookConverter` handles the bidirectional conversion between XLSX binary format and the Sheet.js object model. It reads an XLSX `Buffer`, parses every sheet into `Sheet` objects containing `Table` and `List` blocks, and materializes the result as a fully typed `Workbook` instance. The reverse direction accepts a `Workbook` and produces an `XLSX.WorkBook` that you can write to disk or stream as bytes. Most applications reach `WorkbookConverter` indirectly through the `Workbook.fromXlsx` and `Workbook.toXlsx` static helpers, but direct instantiation is available when you need a custom `Workbook` subclass or finer control over the conversion.
+
+## Using via Workbook static methods (recommended)
+
+`Workbook.fromXlsx` and `Workbook.toXlsx` are static convenience wrappers that each create a `WorkbookConverter` instance internally. This is the simplest way to import and export XLSX files.
+
+```typescript
+import { Workbook } from '@org-quicko/sheet';
+import * as fs from 'fs';
+
+// Import: read an XLSX file into a Workbook
+const buffer = fs.readFileSync('report.xlsx');
+const workbook = Workbook.fromXlsx(buffer);
+
+// Export: convert a Workbook back to XLSX format
+const xlsxWorkbook = Workbook.toXlsx(workbook);
+```
+
+## Direct instantiation
+
+Instantiate `WorkbookConverter` directly when you need to pass a custom `Workbook` subclass or when you want to reuse a single converter instance across multiple files.
+
+```typescript
+import { WorkbookConverter, Workbook } from '@org-quicko/sheet';
+import * as fs from 'fs';
+
+const converter = new WorkbookConverter();
+
+// Convert a buffer to a Workbook
+const buffer = fs.readFileSync('report.xlsx');
+const workbook = converter.toWorkbook(buffer, Workbook);
+
+// Convert the Workbook back to XLSX
+const xlsxWorkbook = converter.toXlsx(workbook);
+```
+
+## toWorkbook\<T extends Workbook\>(fileBuffer: Buffer, Class: new () => T): T
+
+Parses an XLSX file buffer and returns a populated instance of `Class` (or a subclass of `Workbook`).
+
+```typescript
+converter.toWorkbook(fileBuffer: Buffer, Class: new () => T): T
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `fileBuffer` | `Buffer` | The raw bytes of an `.xlsx` file, e.g. from `fs.readFileSync`. |
+| `Class` | `new () => T` | The constructor of a `Workbook` subclass to instantiate. Pass `Workbook` for the base class. |
+
+**Returns:** A fully populated `T` instance with all sheets, blocks, and rows deserialized from the XLSX content.
+
+Pass a custom subclass to reconstruct data into your own typed model:
+
+```typescript
+import { Workbook, WorkbookConverter } from '@org-quicko/sheet';
+import * as Reflect from 'reflect-metadata';
+
+@Reflect.metadata('name', 'sales-report')
+class SalesWorkbook extends Workbook {}
+
+const converter = new WorkbookConverter();
+const salesWb = converter.toWorkbook(buffer, SalesWorkbook);
+// salesWb is a SalesWorkbook instance
+```
+
+**Throws:** `ConverterException` (from `@org-quicko/core`) if the buffer cannot be read or if parsing fails at the sheet, table, or list level.
+
+## toXlsx(workbook: Workbook): XLSX.WorkBook
+
+Serializes a `Workbook` instance to an `XLSX.WorkBook` object from the [`xlsx`](https://www.npmjs.com/package/xlsx) library.
+
+```typescript
+converter.toXlsx(workbook: Workbook): XLSX.WorkBook
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `workbook` | `Workbook` | The Sheet.js `Workbook` to serialize. |
+
+**Returns:** An `XLSX.WorkBook` that you can pass directly to `XLSX.writeFile` or `XLSX.write`.
+
+```typescript
+import * as XLSX from 'xlsx';
+import { Workbook } from '@org-quicko/sheet';
+
+const xlsxWb = Workbook.toXlsx(workbook);
+
+// Write directly to a file
+XLSX.writeFile(xlsxWb, 'output.xlsx');
+
+// Or produce a Buffer for in-memory use or HTTP responses
+const buffer = XLSX.write(xlsxWb, { type: 'buffer', bookType: 'xlsx' });
+```
+
+## Block detection rules
+
+`WorkbookConverter` uses the following rules when parsing an XLSX worksheet into `Sheet`, `Table`, and `List` blocks:
+
+### Sheet naming
+
+XLSX sheet names may not exceed 31 characters. When writing a sheet to XLSX, the converter takes the last dot-separated segment of the `Sheet` name and trims it to the final 31 characters. For example, `'com.example.my_company.sales'` becomes `'sales'`.
+
+### Block boundaries
+
+Rows are scanned top-to-bottom. A **new block starts** when a previously empty row is followed by a non-empty row (or at the very first non-empty row). A **block ends** when a non-empty row is followed by an empty row. Two empty rows between blocks act as a visual separator but a single empty row is sufficient.
+
+### Block type: Table vs. List
+
+The **first row** of every block is the block name. If that name ends with the word `list` (case-insensitive, e.g. `"Parameters list"` or `"config_list"`), the block is parsed as a `List`; any other name produces a `Table`.
+
+### Table layout
+
+| XLSX row | Role |
+|---|---|
+| First row of block | Block name (becomes `table.getName()`). |
+| Second row of block | Column headers (becomes `table.getHeader()`). String values are trimmed. |
+| Third row onward | Data rows. Each row is stored as a `JSONArray` aligned to the header. |
+
+If a header column name contains the word `'epoch'`, string cell values that match ISO 8601 format (`YYYY-MM-DDTHH:MM:SS±HH:MM`) are automatically converted to epoch milliseconds. Other string cells that match `MM/dd/yyyy` date format are also converted to epoch milliseconds.
+
+### List layout
+
+| XLSX row | Role |
+|---|---|
+| First row of block | Block name (becomes `list.getName()`). |
+| Second row onward | Key-value pairs: column A = key, column B = value. Rows where either A or B is `null` are skipped. |
+
+If a key contains the word `'epoch'` and the corresponding value is a number, the epoch millisecond is automatically converted to an ISO 8601 string on XLSX export (and back on import).
+
+## Static properties
+
+### WorkbookConverter.isoFormatRegex
+
+```typescript
+static isoFormatRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+```
+
+The regular expression used internally to detect ISO 8601 date strings in cells belonging to `epoch`-named columns or keys. Exposed as a static property for inspection or reuse in custom converter logic.
+
+## Error handling
+
+Both `toWorkbook` and the private sheet/block parsers catch all exceptions and re-throw them as a `ConverterException` from `@org-quicko/core`, with a message that describes which layer failed:
+
+| Error message prefix | Meaning |
+|---|---|
+| `Invalid Input Workbook: …` | Top-level XLSX read or JSON parse failure. |
+| `Invalid Input Sheet: …` | Sheet-level parsing error. |
+| `Invalid Input Table: …` | Table-level parsing error. |
+| `Invalid Input List: …` | List-level parsing error. |
+
+```typescript
+import { ConverterException } from '@org-quicko/core';
+
+try {
+  const workbook = Workbook.fromXlsx(corruptBuffer);
+} catch (err) {
+  if (err instanceof ConverterException) {
+    console.error('Conversion failed:', err.message);
+  }
+}
+```
+
+## Import
+
+```typescript
+import { WorkbookConverter } from '@org-quicko/sheet';
+```
