@@ -48,33 +48,44 @@ const EXAMPLE_WORKBOOK = `{
 
 const FAQS = [
   {
-    question: "What is sheet-json?",
+    question: "How do I store Excel spreadsheet data as JSON?",
     answer:
-      "Sheet JSON represents a workbook as JSON. A workbook contains sheets, and each sheet contains table or list blocks. A table has a header and rows, and a list holds key-value pairs.",
+      "Use a JSON format that keeps the workbook structure, such as sheet-json. In sheet-json, a workbook holds sheets, each sheet holds table or list blocks, and a table has a header array and row arrays. Use the Sheet Tools Schema Builder to design this structure without writing JSON by hand.",
   },
   {
-    question: "How do I generate TypeScript classes from a sheet-json schema?",
+    question: "How do I create a JSON Schema without writing it by hand?",
     answer:
-      "Export the schema from the Schema Builder, then run the @org-quicko/sheet-generator npm package as a CLI or from an npm script. It creates classes for workbooks, sheets, tables, rows and lists. It requires Node.js 20 or higher.",
+      "Use a visual editor such as the Sheet Tools Schema Builder. Add sheets, tables, lists and fields, set their types and validations, and export the result as a JSON Schema (draft-07). It runs in your browser and needs no install.",
   },
   {
-    question: "How do I generate Java classes from a sheet-json schema?",
+    question: "How do I view a JSON file as a spreadsheet?",
     answer:
-      "Add the in.org.quicko.sheet:generator Maven plugin to your build. It runs in the generate-sources phase and creates Java classes and Jackson mixins from your schema.",
+      "If your file is a sheet-json workbook, open it in the Sheet Visualizer. It shows each table or list as a spreadsheet grid, where you can edit cells and add rows. Other JSON shapes must be converted to sheet-json first.",
   },
   {
-    question: "Which JSON Schema version does Sheet Tools use?",
-    answer: "The Schema Builder exports JSON Schema draft-07.",
+    question: "How do I validate JSON data against a JSON Schema online?",
+    answer:
+      "If your data is a sheet-json workbook, import the data and its schema into the Sheet Visualizer. It checks each cell and marks the values that do not match in red, with the error message. The check runs in your browser, so your data is not uploaded.",
   },
   {
-    question: "Does Sheet Tools upload my data?",
+    question: "How do I generate TypeScript classes from a JSON Schema?",
     answer:
-      "No. Sheet Tools runs in your browser. The Schema Builder saves your workbooks in your browser's IndexedDB storage. If you import data or a schema from a URL, your browser fetches that URL directly.",
+      "For a sheet-json schema, run the schema-to-objects command from the @org-quicko/sheet-generator npm package. It creates TypeScript classes with decorators for workbooks, sheets, tables, rows and lists. It needs Node.js 20 or higher.",
+  },
+  {
+    question: "How do I generate Java classes from a JSON Schema with Maven?",
+    answer:
+      "For a sheet-json schema, add the in.org.quicko.sheet:generator Maven plugin to your pom.xml, and set sourcePath to the schema and targetPackage to your package. It runs in the generate-sources phase and creates Java classes and Jackson mixins.",
+  },
+  {
+    question: "How do I generate a JSON Schema from an Excel or JSON file?",
+    answer:
+      "Run the excel-to-schema or json-to-schema command from the @org-quicko/sheet-generator npm package. Each command reads your file and writes a JSON Schema. Import that schema into the Schema Builder to add types and validations.",
   },
   {
     question: "Is Sheet Tools free?",
     answer:
-      "Yes. Sheet Tools is free and open source under the GNU Affero General Public License v3.0 only (AGPL-3.0-only). The source code is on GitHub.",
+      "Yes. Sheet Tools is free, needs no account and is open source under the GNU Affero General Public License v3.0 only (AGPL-3.0-only). Your workbooks stay in your browser. If you import from a URL, your browser fetches that URL directly.",
   },
 ]
 
