@@ -1,7 +1,10 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { SITE_URL } from '@/lib/site'
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  alternates: { canonical: '/' },
   title: 'Sheet Tools – Sheet-JSON Builder & Schema Generator | Labs at Quicko',
   description: 'Create sheet-JSON workbooks, build schemas, visualize data, and generate code effortlessly with your Excel-like JSON toolkit.',
   applicationName: 'Sheet Tools',
@@ -9,12 +12,13 @@ export const metadata: Metadata = {
   authors: [{ name: 'Labs@Quicko', url: 'https://quicko.company/labs' }],
   openGraph: {
     type: 'website',
+    url: '/',
     siteName: 'Sheet Tools',
     title: 'Sheet Tools – Sheet-JSON Builder & Schema Generator',
     description: 'Build schemas, visualize workbook data, and generate TypeScript and Java code for sheet-json.',
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'Sheet Tools – Sheet-JSON Builder & Schema Generator',
     description: 'Build schemas, visualize workbook data, and generate TypeScript and Java code for sheet-json.',
   },

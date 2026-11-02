@@ -768,7 +768,7 @@ function SheetVisualizerContent() {
                       ) : (
                         <Table className="w-5 h-5 text-gray-500" />
                       )}
-                      <h1 className="text-xl font-semibold">{currentBlock.name}</h1>
+                      <h2 className="text-xl font-semibold">{currentBlock.name}</h2>
                       <Badge variant="outline">{currentBlock["@entity"]}</Badge>
                     </div>
                     <p className="text-sm text-gray-600 mt-1">

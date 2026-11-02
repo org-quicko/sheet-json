@@ -19,17 +19,92 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { Github } from "@/components/github-icon"
 import { JavaIcon, TypeScriptIcon } from "@/components/language-icons"
+import { JsonLd } from "@/components/json-ld"
+import { webApplication } from "@/lib/site"
+
+const EXAMPLE_WORKBOOK = `{
+  "@entity": "workbook",
+  "name": "report_workbook",
+  "sheets": [
+    {
+      "@entity": "sheet",
+      "name": "report_sheet",
+      "blocks": [
+        {
+          "@entity": "table",
+          "name": "payment_table",
+          "header": ["date", "amount"],
+          "rows": [["2026-04-01", 1500], ["2026-04-02", null]]
+        },
+        {
+          "@entity": "list",
+          "name": "settings_list",
+          "items": [{ "currency": "INR" }]
+        }
+      ]
+    }
+  ]
+}`
+
+const FAQS = [
+  {
+    question: "What is sheet-json?",
+    answer:
+      "Sheet JSON represents a workbook as JSON. A workbook contains sheets, and each sheet contains table or list blocks. A table has a header and rows, and a list holds key-value pairs.",
+  },
+  {
+    question: "How do I generate TypeScript classes from a sheet-json schema?",
+    answer:
+      "Export the schema from the Schema Builder, then run the @org-quicko/sheet-generator npm package as a CLI or from an npm script. It creates classes for workbooks, sheets, tables, rows and lists. It requires Node.js 20 or higher.",
+  },
+  {
+    question: "How do I generate Java classes from a sheet-json schema?",
+    answer:
+      "Add the in.org.quicko.sheet:generator Maven plugin to your build. It runs in the generate-sources phase and creates Java classes and Jackson mixins from your schema.",
+  },
+  {
+    question: "Which JSON Schema version does Sheet Tools use?",
+    answer: "The Schema Builder exports JSON Schema draft-07.",
+  },
+  {
+    question: "Does Sheet Tools upload my data?",
+    answer:
+      "No. Sheet Tools runs in your browser. The Schema Builder saves your workbooks in your browser's IndexedDB storage.",
+  },
+  {
+    question: "Is Sheet Tools free?",
+    answer: "Yes. Sheet Tools and the sheet-json libraries are free and open source on GitHub.",
+  },
+]
+
+const JSON_LD = [
+  webApplication(
+    "Sheet Tools",
+    "/",
+    "Browser tools to build JSON Schemas for sheet-json workbooks, view workbook data as a spreadsheet, and generate TypeScript and Java classes.",
+  ),
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQS.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: { "@type": "Answer", text: faq.answer },
+    })),
+  },
+]
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <JsonLd data={JSON_LD} />
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <FileSpreadsheet className="w-8 h-8 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-900">Sheet Tools</h1>
+              <span className="text-2xl font-bold text-gray-900">Sheet Tools</span>
             </div>
             <div className="flex items-center space-x-4">
               <Link href="https://github.com/org-quicko/sheet-json" target="_blank" rel="noopener noreferrer">
@@ -51,11 +126,12 @@ export default function LandingPage() {
           </Badge>
           <h1 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
             Build, Visualize & Generate
-            <span className="text-blue-600 block">Sheet Objects</span>
+            <span className="text-blue-600 block">Sheet-JSON Schemas</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-            A comprehensive suite of tools for working with sheet-json. Create schemas, visualize data, and generate
-            objects with ease.
+            Sheet JSON represents a workbook as JSON: a workbook contains sheets, and each sheet contains table or list
+            blocks. Sheet Tools lets you build a JSON Schema for your workbook, view its data as a spreadsheet, and
+            generate TypeScript or Java classes from it.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/sheet-schema-builder">
@@ -328,13 +404,24 @@ export default function LandingPage() {
             <div className="p-6 border rounded-lg hover:shadow-md transition-shadow bg-white">
               <Code className="w-8 h-8 text-blue-600 mb-3" />
               <h3 className="font-semibold mb-2">Code Generation</h3>
-              <p className="text-gray-600 text-sm">Generate code in multiple programming languages from your schemas</p>
+              <p className="text-gray-600 text-sm">Generate TypeScript and Java classes from your schemas</p>
             </div>
 
             <div className="p-6 border rounded-lg hover:shadow-md transition-shadow bg-white">
               <Database className="w-8 h-8 text-green-600 mb-3" />
               <h3 className="font-semibold mb-2">JSON Schema Support</h3>
-              <p className="text-gray-600 text-sm">Full JSON Schema compliance with validation</p>
+              <p className="text-gray-600 text-sm">
+                Export schemas as{" "}
+                <Link
+                  href="https://json-schema.org/draft-07"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline underline-offset-2"
+                >
+                  JSON Schema draft-07
+                </Link>{" "}
+                and validate every cell against them
+              </p>
             </div>
 
             <div className="p-6 border rounded-lg hover:shadow-md transition-shadow bg-white">
@@ -348,6 +435,37 @@ export default function LandingPage() {
               <h3 className="font-semibold mb-2">Hierarchical Structure</h3>
               <p className="text-gray-600 text-sm">Organize data in workbooks, sheets, and blocks</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Example Section */}
+      <section className="py-16 px-4 bg-white">
+        <div className="container mx-auto max-w-4xl">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">What a Sheet-JSON Workbook Looks Like</h2>
+            <p className="text-lg text-gray-600">
+              A table has a header and rows. Each row value belongs to the column at the same index. Use{" "}
+              <code>null</code> for an empty cell. A list holds key-value pairs.
+            </p>
+          </div>
+          <pre className="overflow-x-auto rounded-lg bg-gray-900 p-6 text-sm text-gray-100">
+            <code>{EXAMPLE_WORKBOOK}</code>
+          </pre>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-16 px-4 bg-gray-50">
+        <div className="container mx-auto max-w-4xl">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Frequently Asked Questions</h2>
+          <div className="space-y-6">
+            {FAQS.map((faq) => (
+              <div key={faq.question} className="rounded-lg border bg-white p-6">
+                <h3 className="font-semibold mb-2">{faq.question}</h3>
+                <p className="text-gray-600 text-sm">{faq.answer}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
