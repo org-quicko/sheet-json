@@ -4,7 +4,6 @@ import {
   ArrowRight,
   Code,
   Eye,
-  Github,
   Layers,
   Zap,
   FileSpreadsheet,
@@ -18,6 +17,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import { Github } from "@/components/github-icon"
+import { JavaIcon, TypeScriptIcon } from "@/components/language-icons"
 
 export default function LandingPage() {
   return (
@@ -31,7 +32,7 @@ export default function LandingPage() {
               <h1 className="text-2xl font-bold text-gray-900">Sheet Tools</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href="https://github.com/org-quicko/sheet-js" target="_blank" rel="noopener noreferrer">
+              <Link href="https://github.com/org-quicko/sheet-json" target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" size="sm">
                   <Github className="w-4 h-4 mr-2" />
                   GitHub
@@ -77,11 +78,11 @@ export default function LandingPage() {
       <section className="py-16 px-4 bg-white">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Three Powerful Tools</h2>
-            <p className="text-lg text-gray-600">Everything you need to work with sheet-json efficiently</p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Everything You Need</h2>
+            <p className="text-lg text-gray-600">Design schemas, visualize data, and generate code for sheet-json</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* Schema Builder Card */}
             <Card className="relative overflow-hidden border-2 hover:border-blue-200 transition-colors">
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-full -translate-y-16 translate-x-16 opacity-50"></div>
@@ -157,55 +158,12 @@ export default function LandingPage() {
                 </Link>
               </CardContent>
             </Card>
-
-            {/* Generators Card */}
-            <Card className="relative overflow-hidden border-2 hover:border-purple-200 transition-colors">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-100 rounded-full -translate-y-16 translate-x-16 opacity-50"></div>
-              <CardHeader>
-                <div className="flex items-center space-x-3 mb-2">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <Terminal className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <CardTitle className="text-xl">Code Generators</CardTitle>
-                </div>
-                <CardDescription className="text-base">
-                  Generate code from your schemas in multiple programming languages
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <Code className="w-4 h-4 text-purple-500" />
-                    <span className="text-sm">Language-specific code generation</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Download className="w-4 h-4 text-purple-500" />
-                    <span className="text-sm">Easy integration with your projects</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Github className="w-4 h-4 text-purple-500" />
-                    <span className="text-sm">Open source and extensible</span>
-                  </div>
-                </div>
-                <Link
-                  href="https://github.com/org-quicko/sheet-generator-js"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block"
-                >
-                  <Button className="w-full mt-4">
-                    Explore Generators
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </section>
 
       {/* Generators Section */}
-      <section className="py-16 px-4 bg-gray-50">
+      <section id="generators" className="py-16 px-4 bg-gray-50">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Language Generators</h2>
@@ -214,37 +172,38 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 gap-8">
             {/* TypeScript Generator */}
             <Card className="border-2 hover:border-blue-200 transition-colors">
               <CardHeader>
                 <div className="flex items-center space-x-3 mb-2">
                   <div className="p-2 bg-blue-100 rounded-lg">
-                    <Code className="w-6 h-6 text-blue-600" />
+                    <TypeScriptIcon className="w-6 h-6 text-blue-600" />
                   </div>
                   <CardTitle className="text-xl">TypeScript Generator</CardTitle>
                 </div>
                 <CardDescription className="text-base">
-                  Generate type-safe TypeScript interfaces from your sheet schemas
+                  Generate TypeScript classes, with decorators, from your sheet JSON schemas
                 </CardDescription>
+                <code className="text-xs text-gray-500">@org-quicko/sheet-generator</code>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <Zap className="w-4 h-4 text-blue-500" />
-                    <span className="text-sm">Type-safe interfaces</span>
+                  <div className="flex items-start space-x-2">
+                    <Zap className="w-4 h-4 mt-0.5 shrink-0 text-blue-500" />
+                    <span className="text-sm">Classes for workbooks, sheets, tables, rows and lists</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Database className="w-4 h-4 text-blue-500" />
-                    <span className="text-sm">Full schema support</span>
+                  <div className="flex items-start space-x-2">
+                    <Terminal className="w-4 h-4 mt-0.5 shrink-0 text-blue-500" />
+                    <span className="text-sm">Run it as a CLI or from an npm script</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Github className="w-4 h-4 text-blue-500" />
-                    <span className="text-sm">Available now</span>
+                  <div className="flex items-start space-x-2">
+                    <Database className="w-4 h-4 mt-0.5 shrink-0 text-blue-500" />
+                    <span className="text-sm">Requires Node.js 20 or higher</span>
                   </div>
                 </div>
                 <Link
-                  href="https://github.com/org-quicko/sheet-generator-js"
+                  href="https://github.com/org-quicko/sheet-json/tree/main/lib/nodejs/org-quicko-sheet-generator"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block"
@@ -257,42 +216,61 @@ export default function LandingPage() {
               </CardContent>
             </Card>
 
-            {/* Coming Soon: Other Languages */}
-            <Card className="border-2 hover:border-purple-200 transition-colors bg-white/80">
+            {/* Java Generator */}
+            <Card className="border-2 hover:border-orange-200 transition-colors">
               <CardHeader>
                 <div className="flex items-center space-x-3 mb-2">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <Code className="w-6 h-6 text-purple-600" />
+                  <div className="p-2 bg-orange-100 rounded-lg">
+                    <JavaIcon className="w-6 h-6 text-orange-600" />
                   </div>
-                  <CardTitle className="text-xl">More Languages</CardTitle>
+                  <CardTitle className="text-xl">Java Generator</CardTitle>
                 </div>
                 <CardDescription className="text-base">
-                  Support for additional programming languages coming soon
+                  Generate Java classes and Jackson mixins from your sheet JSON schemas
                 </CardDescription>
+                <code className="text-xs text-gray-500">in.org.quicko.sheet:generator</code>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <Zap className="w-4 h-4 text-purple-500" />
-                    <span className="text-sm">Java, C#, Go, and more</span>
+                  <div className="flex items-start space-x-2">
+                    <Zap className="w-4 h-4 mt-0.5 shrink-0 text-orange-500" />
+                    <span className="text-sm">Classes for workbooks, sheets, tables, rows and lists, plus Jackson mixins</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Database className="w-4 h-4 text-purple-500" />
-                    <span className="text-sm">Language-specific features</span>
+                  <div className="flex items-start space-x-2">
+                    <Terminal className="w-4 h-4 mt-0.5 shrink-0 text-orange-500" />
+                    <span className="text-sm">Runs as a Maven plugin in the <code>generate-sources</code> phase</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Github className="w-4 h-4 text-purple-500" />
-                    <span className="text-sm">Community contributions welcome</span>
+                  <div className="flex items-start space-x-2">
+                    <Database className="w-4 h-4 mt-0.5 shrink-0 text-orange-500" />
+                    <span className="text-sm">Set the schema path, target package and optional output directory</span>
                   </div>
                 </div>
-                <div className="w-full mt-4">
-                  <Badge variant="outline" className="w-full py-2 justify-center">
-                    Coming Soon
-                  </Badge>
-                </div>
+                <Link
+                  href="https://github.com/org-quicko/sheet-json/tree/main/lib/java/org-quicko-sheet-generator"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  <Button className="w-full mt-4">
+                    View on GitHub
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           </div>
+
+          <p className="text-center text-sm text-gray-600 mt-8">
+            Need another language?{" "}
+            <Link
+              href="https://github.com/org-quicko/sheet-json/issues/new"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-blue-600 underline underline-offset-2"
+            >
+              Request a generator
+            </Link>
+          </p>
         </div>
       </section>
 
@@ -392,7 +370,7 @@ export default function LandingPage() {
                 Sheet Visualizer
               </Button>
             </Link>
-            <Link href="https://github.com/org-quicko/sheet-generator-js" target="_blank" rel="noopener noreferrer">
+            <Link href="#generators">
               <Button size="lg" variant="secondary" className="w-full sm:w-auto">
                 <Terminal className="w-5 h-5 mr-2" />
                 Code Generators
@@ -437,7 +415,7 @@ export default function LandingPage() {
             {/* Right: Links and Info */}
             <div className="flex flex-col items-end space-y-3">
               <Link
-                href="https://github.com/org-quicko/sheet-js"
+                href="https://github.com/org-quicko/sheet-json"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center space-x-2 hover:text-blue-400 transition-colors group"
