@@ -210,7 +210,7 @@ export function MainContent() {
         {/* Header - Fixed */}
         <div className="flex-shrink-0 flex items-center justify-between p-6 border-b">
           <div>
-            <h1 className="text-2xl font-bold">{activeWorkbook.name}</h1>
+            <h2 className="text-2xl font-bold">{activeWorkbook.name}</h2>
             <p className="text-gray-500">All Blocks ({allBlocks.length})</p>
           </div>
           <div className="flex items-center space-x-3">
@@ -399,7 +399,7 @@ export function MainContent() {
         {/* Header - Fixed */}
         <div className="flex-shrink-0 flex items-center justify-between p-6 border-b">
           <div>
-            <h1 className="text-2xl font-bold">{activeSheet.name}</h1>
+            <h2 className="text-2xl font-bold">{activeSheet.name}</h2>
             <p className="text-gray-500">
               Workbook: {activeWorkbook.name} • {activeSheet.blocks.length} blocks
             </p>
@@ -599,11 +599,11 @@ export function MainContent() {
       <div className="flex-shrink-0 bg-white border-b">
         <div className="flex items-center justify-between p-6">
           <div>
-            <h1 className="text-2xl font-bold flex items-center space-x-2">
+            <h2 className="text-2xl font-bold flex items-center space-x-2">
               {activeBlock.type === "list" ? <List className="w-6 h-6" /> : <Table className="w-6 h-6" />}
               <span>{activeBlock.name}</span>
               <span className="text-lg text-gray-500 capitalize font-normal">({activeBlock.type})</span>
-            </h1>
+            </h2>
             <p className="text-gray-500">
               Sheet: {activeSheet.name} • Workbook: {activeWorkbook.name}
             </p>

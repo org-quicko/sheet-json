@@ -2,11 +2,15 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { SITE_URL } from '@/lib/site'
 
+const title = 'Sheet-JSON Schema Builder & Visualizer | Sheet Tools'
+const description =
+  'Build draft-07 JSON Schemas for sheet-json workbooks, edit workbook data in a spreadsheet view, and generate TypeScript and Java classes in your browser.'
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   alternates: { canonical: '/' },
-  title: 'Sheet Tools – Sheet-JSON Builder & Schema Generator | Labs at Quicko',
-  description: 'Create sheet-JSON workbooks, build schemas, visualize data, and generate code effortlessly with your Excel-like JSON toolkit.',
+  title,
+  description,
   applicationName: 'Sheet Tools',
   keywords: ['sheet-json', 'schema builder', 'sheet visualizer', 'JSON Schema', 'code generator', 'TypeScript', 'Java'],
   authors: [{ name: 'Labs@Quicko', url: 'https://quicko.company/labs' }],
@@ -14,13 +18,13 @@ export const metadata: Metadata = {
     type: 'website',
     url: '/',
     siteName: 'Sheet Tools',
-    title: 'Sheet Tools – Sheet-JSON Builder & Schema Generator',
-    description: 'Build schemas, visualize workbook data, and generate TypeScript and Java code for sheet-json.',
+    title,
+    description,
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Sheet Tools – Sheet-JSON Builder & Schema Generator',
-    description: 'Build schemas, visualize workbook data, and generate TypeScript and Java code for sheet-json.',
+    title,
+    description,
   },
   icons: {
     icon: [

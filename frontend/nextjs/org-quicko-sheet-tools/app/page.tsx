@@ -20,7 +20,7 @@ import Link from "next/link"
 import { Github } from "@/components/github-icon"
 import { JavaIcon, TypeScriptIcon } from "@/components/language-icons"
 import { JsonLd } from "@/components/json-ld"
-import { webApplication } from "@/lib/site"
+import { faqPage, webApplication } from "@/lib/site"
 
 const EXAMPLE_WORKBOOK = `{
   "@entity": "workbook",
@@ -69,29 +69,22 @@ const FAQS = [
   {
     question: "Does Sheet Tools upload my data?",
     answer:
-      "No. Sheet Tools runs in your browser. The Schema Builder saves your workbooks in your browser's IndexedDB storage.",
+      "No. Sheet Tools runs in your browser. The Schema Builder saves your workbooks in your browser's IndexedDB storage. If you import data or a schema from a URL, your browser fetches that URL directly.",
   },
   {
     question: "Is Sheet Tools free?",
-    answer: "Yes. Sheet Tools and the sheet-json libraries are free and open source on GitHub.",
+    answer:
+      "Yes. Sheet Tools is free and open source under the GNU Affero General Public License v3.0 only (AGPL-3.0-only). The source code is on GitHub.",
   },
 ]
 
 const JSON_LD = [
   webApplication(
     "Sheet Tools",
-    "/",
+    "",
     "Browser tools to build JSON Schemas for sheet-json workbooks, view workbook data as a spreadsheet, and generate TypeScript and Java classes.",
   ),
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: FAQS.map((faq) => ({
-      "@type": "Question",
-      name: faq.question,
-      acceptedAnswer: { "@type": "Answer", text: faq.answer },
-    })),
-  },
+  faqPage(FAQS),
 ]
 
 export default function LandingPage() {
@@ -219,7 +212,7 @@ export default function LandingPage() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <Eye className="w-4 h-4 text-green-500" />
-                    <span className="text-sm">Interactive data visualization</span>
+                    <span className="text-sm">Edit cells and add rows</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Database className="w-4 h-4 text-green-500" />
@@ -261,7 +254,14 @@ export default function LandingPage() {
                 <CardDescription className="text-base">
                   Generate TypeScript classes, with decorators, from your sheet JSON schemas
                 </CardDescription>
-                <code className="text-xs text-gray-500">@org-quicko/sheet-generator</code>
+                <Link
+                  href="https://www.npmjs.com/package/@org-quicko/sheet-generator"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-gray-500 underline underline-offset-2"
+                >
+                  <code>@org-quicko/sheet-generator</code> on npm
+                </Link>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
@@ -304,7 +304,14 @@ export default function LandingPage() {
                 <CardDescription className="text-base">
                   Generate Java classes and Jackson mixins from your sheet JSON schemas
                 </CardDescription>
-                <code className="text-xs text-gray-500">in.org.quicko.sheet:generator</code>
+                <Link
+                  href="https://central.sonatype.com/artifact/in.org.quicko.sheet/generator"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-gray-500 underline underline-offset-2"
+                >
+                  <code>in.org.quicko.sheet:generator</code> on Maven Central
+                </Link>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
@@ -420,7 +427,7 @@ export default function LandingPage() {
                 >
                   JSON Schema draft-07
                 </Link>{" "}
-                and validate every cell against them
+                and use them to validate cell values in the Sheet Visualizer
               </p>
             </div>
 
