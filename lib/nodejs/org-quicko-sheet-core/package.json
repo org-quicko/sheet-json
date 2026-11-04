@@ -75,6 +75,7 @@
 		"jest": "^30.5.2",
 		"rollup": "^4.67.4",
 		"rollup-plugin-dts": "^6.5.1",
+		"ts-jest": "^29.4.15",
 		"ts-node": "^10.9.2",
 		"typescript": "^6.0.3",
 		"typescript-native": "npm:typescript@^7.0.2"
