@@ -137,7 +137,7 @@ export function FormField({ id, label, fieldSchema, value, onChange, error }: Fo
     return (
       <div className="space-y-2">
         {renderInput()}
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className="text-sm text-red-500 dark:text-red-400">{error}</p>}
       </div>
     )
   }
@@ -147,15 +147,15 @@ export function FormField({ id, label, fieldSchema, value, onChange, error }: Fo
       <div className="flex items-center space-x-2">
         <Label htmlFor={id} className="text-sm font-medium">
           {label}
-          {isRequired && <span className="text-red-500 ml-1">*</span>}
+          {isRequired && <span className="text-red-500 dark:text-red-400 ml-1">*</span>}
         </Label>
         <Badge variant="outline" className="text-xs">
           {types.join(" | ")}
         </Badge>
       </div>
       {renderInput()}
-      {error && <p className="text-sm text-red-500">{error}</p>}
-      {fieldSchema.description && <p className="text-xs text-gray-500">{fieldSchema.description}</p>}
+      {error && <p className="text-sm text-red-500 dark:text-red-400">{error}</p>}
+      {fieldSchema.description && <p className="text-xs text-muted-foreground">{fieldSchema.description}</p>}
     </div>
   )
 }

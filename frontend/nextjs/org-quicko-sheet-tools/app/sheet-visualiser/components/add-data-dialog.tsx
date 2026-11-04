@@ -362,7 +362,7 @@ export function AddDataDialog({
               {dynamicFields.map((field, index) => (
                 <div key={index} className="flex gap-2 items-end">
                   <div className="flex-1">
-                    <Label htmlFor={`field_${index}`} className="text-xs text-gray-600">
+                    <Label htmlFor={`field_${index}`} className="text-xs text-muted-foreground">
                       {field.key || `Column ${index + 1}`}
                     </Label>
                     <Input
@@ -387,7 +387,7 @@ export function AddDataDialog({
               {dynamicFields.map((field, index) => (
                 <div key={index} className="flex gap-2 items-end">
                   <div className="flex-1">
-                    <Label htmlFor={`key_${index}`} className="text-xs text-gray-600">
+                    <Label htmlFor={`key_${index}`} className="text-xs text-muted-foreground">
                       Key
                     </Label>
                     <Input
@@ -397,10 +397,10 @@ export function AddDataDialog({
                       placeholder="Enter key"
                       className={errors[`key_${index}`] ? "border-red-500" : ""}
                     />
-                    {errors[`key_${index}`] && <p className="text-xs text-red-500 mt-1">{errors[`key_${index}`]}</p>}
+                    {errors[`key_${index}`] && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{errors[`key_${index}`]}</p>}
                   </div>
                   <div className="flex-1">
-                    <Label htmlFor={`value_${index}`} className="text-xs text-gray-600">
+                    <Label htmlFor={`value_${index}`} className="text-xs text-muted-foreground">
                       Value
                     </Label>
                     <Input
@@ -455,7 +455,7 @@ export function AddDataDialog({
           <DialogTitle>
             {dialogTitle}
             {hasSchema && (
-              <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Schema Validated</span>
+              <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 px-2 py-1 rounded">Schema Validated</span>
             )}
           </DialogTitle>
           <DialogDescription>{dialogDescription}</DialogDescription>

@@ -10,6 +10,7 @@ import { useSearchParams } from 'next/navigation'
 import { useEffect, useState, Suspense } from "react"
 import { importSchemaFromUrl, WorkbookNameConflictError } from "@/lib/import-schema"
 import { useSchemaStore } from "@/store/schema-store"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 function App() {
   const searchParams = useSearchParams()
@@ -80,7 +81,7 @@ function App() {
 
   if (!isHydrated) {
     return (
-      <div className="flex h-screen items-center justify-center bg-white">
+      <div className="flex h-screen items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     )
@@ -88,7 +89,7 @@ function App() {
 
   return (
     <SchemaBuilderProvider>
-      <div className="flex h-screen bg-white overflow-hidden">
+      <div className="flex h-screen bg-background overflow-hidden">
         <OverwriteWorkbookDialog
           open={pendingSchemaUrl !== null && conflictWorkbookName !== null}
           workbookName={conflictWorkbookName ?? ""}
@@ -98,12 +99,12 @@ function App() {
 
         {isImporting && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white rounded-lg shadow-lg p-8 mx-4 max-w-sm w-full">
+            <div className="bg-background rounded-lg shadow-lg p-8 mx-4 max-w-sm w-full">
               <div className="text-center space-y-4">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Importing Schema</h3>
-                  <p className="text-sm text-gray-600 mt-1">Loading workbook from URL...</p>
+                  <h3 className="text-lg font-semibold text-foreground">Importing Schema</h3>
+                  <p className="text-sm text-muted-foreground mt-1">Loading workbook from URL...</p>
                 </div>
               </div>
             </div>
@@ -111,20 +112,20 @@ function App() {
         )}
 
         {importError && (
-          <div className="fixed top-4 right-4 z-50 bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg max-w-md">
+          <div className="fixed top-4 right-4 z-50 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-lg p-4 shadow-lg max-w-md">
             <div className="flex items-start space-x-3">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
+                <svg className="h-5 w-5 text-red-600 dark:text-red-400" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-sm font-medium text-red-800">Import Failed</h3>
-                <p className="text-sm text-red-700 mt-1">{importError}</p>
+                <h3 className="text-sm font-medium text-red-800 dark:text-red-300">Import Failed</h3>
+                <p className="text-sm text-red-700 dark:text-red-300 mt-1">{importError}</p>
               </div>
               <button
                 onClick={() => setImportError(null)}
-                className="flex-shrink-0 text-red-400 hover:text-red-600"
+                className="flex-shrink-0 text-red-400 hover:text-red-600 hover:dark:text-red-400"
               >
                 <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -136,17 +137,18 @@ function App() {
 
         {/* Header */}
         <div className="flex flex-col w-full">
-          <header className="bg-white border-b">
+          <header className="bg-background border-b">
             <div className="mx-auto px-4 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Link href="/" className="flex items-center space-x-2 hover:opacity-80">
-                    <FileSpreadsheet className="w-6 h-6 text-blue-600" />
-                    <span className="text-lg font-semibold text-gray-900">Sheet tools</span>
+                    <FileSpreadsheet className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    <span className="text-lg font-semibold text-foreground">Sheet tools</span>
                   </Link>
-                  <span className="text-gray-400">/</span>
-                  <span className="text-gray-600">Sheet Schema Builder</span>
+                  <span className="text-muted-foreground">/</span>
+                  <span className="text-muted-foreground">Sheet Schema Builder</span>
                 </div>
+                <ThemeToggle />
               </div>
             </div>
           </header>

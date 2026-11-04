@@ -275,7 +275,7 @@ export function SchemaDialog() {
             {schema ? (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Workbook: <span className="font-medium">{schema.properties.name.enum[0]}</span>
                   </p>
                   <div className="flex space-x-2">
@@ -299,13 +299,13 @@ export function SchemaDialog() {
                   </div>
                 </div>
                 <div className="border rounded-lg">
-                  <pre className="bg-gray-50 p-4 rounded text-sm overflow-auto max-h-96 whitespace-pre-wrap">
+                  <pre className="bg-muted/50 p-4 rounded text-sm overflow-auto max-h-96 whitespace-pre-wrap">
                     {JSON.stringify(schema, null, 2)}
                   </pre>
                 </div>
               </div>
             ) : (
-              <div className="text-center text-gray-500 py-8">
+              <div className="text-center text-muted-foreground py-8">
                 <p>No schema available. Create some blocks to generate a schema.</p>
               </div>
             )}

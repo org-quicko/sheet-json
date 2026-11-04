@@ -41,7 +41,7 @@ export function WorkbookCombobox({ workbooks, activeWorkbookId, onSelect }: Work
           className="w-full justify-between font-normal"
         >
           <span className="flex items-center min-w-0">
-            <FileSpreadsheet className="w-4 h-4 mr-2 flex-shrink-0 text-gray-500" />
+            <FileSpreadsheet className="w-4 h-4 mr-2 flex-shrink-0 text-muted-foreground" />
             <span className="truncate">{activeWorkbook ? activeWorkbook.name : "Select a workbook"}</span>
           </span>
           <ChevronsUpDown className="w-4 h-4 flex-shrink-0 opacity-50" />

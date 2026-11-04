@@ -382,12 +382,12 @@ export function ImportSchemaDialog({ onClose }: ImportSchemaDialogProps) {
     <>
       {isLoading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-          <div className="relative bg-white rounded-lg shadow-lg p-8 mx-4 max-w-sm w-full pointer-events-auto">
+          <div className="relative bg-background rounded-lg shadow-lg p-8 mx-4 max-w-sm w-full pointer-events-auto">
             <div className="text-center space-y-4">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Importing Schema</h3>
-                <p className="text-sm text-gray-600 mt-1">Processing your JSON schema...</p>
+                <h3 className="text-lg font-semibold text-foreground">Importing Schema</h3>
+                <p className="text-sm text-muted-foreground mt-1">Processing your JSON schema...</p>
               </div>
             </div>
           </div>
@@ -425,7 +425,7 @@ export function ImportSchemaDialog({ onClose }: ImportSchemaDialogProps) {
             <div
               className={cn(
                 "relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
-                isDragOver ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400",
+                isDragOver ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40" : "border-border hover:border-muted-foreground",
                 isLoading && "pointer-events-none opacity-50",
               )}
               onDragOver={handleDragOver}
@@ -445,10 +445,10 @@ export function ImportSchemaDialog({ onClose }: ImportSchemaDialogProps) {
               {selectedFile ? (
                 <div className="space-y-2">
                   <div className="flex items-center justify-center space-x-2">
-                    <FileText className="w-8 h-8 text-green-600" />
+                    <FileText className="w-8 h-8 text-green-600 dark:text-green-400" />
                     <div className="text-left">
-                      <p className="font-medium text-green-700">{selectedFile.name}</p>
-                      <p className="text-sm text-gray-500">{(selectedFile.size / 1024).toFixed(1)} KB</p>
+                      <p className="font-medium text-green-700 dark:text-green-300">{selectedFile.name}</p>
+                      <p className="text-sm text-muted-foreground">{(selectedFile.size / 1024).toFixed(1)} KB</p>
                     </div>
                     {!isLoading && (
                       <Button
@@ -464,16 +464,16 @@ export function ImportSchemaDialog({ onClose }: ImportSchemaDialogProps) {
                       </Button>
                     )}
                   </div>
-                  {isLoading && <p className="text-sm text-blue-600">Processing file...</p>}
+                  {isLoading && <p className="text-sm text-blue-600 dark:text-blue-400">Processing file...</p>}
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <Upload className="w-12 h-12 mx-auto text-gray-400" />
+                  <Upload className="w-12 h-12 mx-auto text-muted-foreground" />
                   <div>
                     <p className="text-lg font-medium">
                       {isDragOver ? "Drop your JSON file here" : "Drop JSON file here or click to browse"}
                     </p>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       {isLoading ? "Processing..." : "Supports .json files"}
                     </p>
                   </div>
@@ -495,7 +495,7 @@ export function ImportSchemaDialog({ onClose }: ImportSchemaDialogProps) {
               onKeyDown={(e) => e.key === "Enter" && !isLoading && schemaUrl.trim() && handleUrlImport()}
               disabled={isLoading}
             />
-            <p className="text-sm text-gray-500 mt-2">Enter a URL to fetch the JSON schema from</p>
+            <p className="text-sm text-muted-foreground mt-2">Enter a URL to fetch the JSON schema from</p>
           </div>
           <Button onClick={() => handleUrlImport()} disabled={isLoading || !schemaUrl.trim()} className="w-full">
             <Link className="w-4 h-4 mr-2" />

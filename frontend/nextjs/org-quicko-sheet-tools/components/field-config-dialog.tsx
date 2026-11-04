@@ -253,7 +253,7 @@ export function FieldConfigDialog({ field, onSave, trigger }: FieldConfigDialogP
                   })
                 }
               />
-              <p className="text-sm text-gray-500 mt-1">Leave empty to allow any value of the specified type</p>
+              <p className="text-sm text-muted-foreground mt-1">Leave empty to allow any value of the specified type</p>
             </div>
           </div>
         </div>

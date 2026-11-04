@@ -149,22 +149,22 @@ export function ListBlockComponent({ block, onUpdate, onDelete }: ListBlockCompo
 
   const getTypeColor = (type: string) => {
     const colors = {
-      string: "bg-blue-100 text-blue-800",
-      number: "bg-green-100 text-green-800",
-      integer: "bg-purple-100 text-purple-800",
-      boolean: "bg-yellow-100 text-yellow-800",
-      object: "bg-red-100 text-red-800",
+      string: "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300",
+      number: "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300",
+      integer: "bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300",
+      boolean: "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300",
+      object: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300",
       array: "bg-pink-100 text-pink-800",
     }
-    return colors[type as keyof typeof colors] || "bg-gray-100 text-gray-800"
+    return colors[type as keyof typeof colors] || "bg-muted text-foreground"
   }
 
   const getFormatColor = (format: string) => {
     const colors = {
-      Long: "bg-indigo-100 text-indigo-800",
+      Long: "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-300",
       BigDecimal: "bg-teal-100 text-teal-800",
     }
-    return colors[format as keyof typeof colors] || "bg-gray-100 text-gray-800"
+    return colors[format as keyof typeof colors] || "bg-muted text-foreground"
   }
 
   return (
@@ -172,8 +172,8 @@ export function ListBlockComponent({ block, onUpdate, onDelete }: ListBlockCompo
       {/* Fields */}
       <div className="space-y-3">
         {block.items.length === 0 ? (
-          <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-lg">
-            <p className="text-gray-500 mb-4">No fields defined yet</p>
+          <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
+            <p className="text-muted-foreground mb-4">No fields defined yet</p>
             <Button onClick={addItem}>
               <Plus className="w-4 h-4 mr-2" />
               Add Your First Field
@@ -183,9 +183,9 @@ export function ListBlockComponent({ block, onUpdate, onDelete }: ListBlockCompo
           block.items.map((item) => (
             <div
               key={item.id}
-              className={`w-[75%] p-4 border rounded-lg space-y-3 bg-white shadow-sm transition-all duration-200 ${
+              className={`w-[75%] p-4 border rounded-lg space-y-3 bg-background shadow-sm transition-all duration-200 ${
                 draggedItem === item.id ? "opacity-50 scale-95" : ""
-              } ${dragOverItem === item.id ? "border-blue-500 bg-blue-50" : ""}`}
+              } ${dragOverItem === item.id ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40" : ""}`}
               draggable
               onDragStart={(e) => handleDragStart(e, item.id)}
               onDragOver={(e) => handleDragOver(e, item.id)}
@@ -194,8 +194,8 @@ export function ListBlockComponent({ block, onUpdate, onDelete }: ListBlockCompo
               onDragEnd={handleDragEnd}
             >
               <div className="flex items-center space-x-2">
-                <div className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded">
-                  <GripVertical className="w-4 h-4 text-gray-400" />
+                <div className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded">
+                  <GripVertical className="w-4 h-4 text-muted-foreground" />
                 </div>
                 <Input
                   placeholder="Field name"

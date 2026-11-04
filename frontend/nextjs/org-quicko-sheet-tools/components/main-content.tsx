@@ -177,8 +177,8 @@ export function MainContent() {
       <div className="h-full flex flex-col">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Select a Workbook to Begin</h3>
-            <p className="text-gray-500">Pick a workbook from the sidebar to view sheets, create blocks, and design your schema.</p>
+            <h3 className="text-lg font-medium text-foreground mb-2">Select a Workbook to Begin</h3>
+            <p className="text-muted-foreground">Pick a workbook from the sidebar to view sheets, create blocks, and design your schema.</p>
           </div>
         </div>
       </div>
@@ -193,8 +193,8 @@ export function MainContent() {
         <div className="h-full flex flex-col">
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No sheets yet</h3>
-              <p className="text-gray-500">Create your first sheet to start building your schema</p>
+              <h3 className="text-lg font-medium text-foreground mb-2">No sheets yet</h3>
+              <p className="text-muted-foreground">Create your first sheet to start building your schema</p>
             </div>
           </div>
         </div>
@@ -211,7 +211,7 @@ export function MainContent() {
         <div className="flex-shrink-0 flex items-center justify-between p-6 border-b">
           <div>
             <h2 className="text-2xl font-bold">{activeWorkbook.name}</h2>
-            <p className="text-gray-500">All Blocks ({allBlocks.length})</p>
+            <p className="text-muted-foreground">All Blocks ({allBlocks.length})</p>
           </div>
           <div className="flex items-center space-x-3">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -264,8 +264,8 @@ export function MainContent() {
         <div className="flex-1 overflow-y-auto p-6">
           {allBlocks.length === 0 ? (
             <div className="text-center py-12">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No blocks yet</h3>
-              <p className="text-gray-500 mb-4">Add your first block to start building your schema</p>
+              <h3 className="text-lg font-medium text-foreground mb-2">No blocks yet</h3>
+              <p className="text-muted-foreground mb-4">Add your first block to start building your schema</p>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
@@ -280,7 +280,7 @@ export function MainContent() {
               {allBlocks.map((block) => (
                 <div
                   key={block.id}
-                  className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer bg-white"
+                  className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer bg-background"
                   onClick={() => {
                     setActiveSheet(block.sheetId)
                     setActiveBlock(block.id)
@@ -289,20 +289,20 @@ export function MainContent() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       {block.type === "list" ? (
-                        <List className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                        <List className="w-5 h-5 text-blue-500 dark:text-blue-400 flex-shrink-0" />
                       ) : (
-                        <Table className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <Table className="w-5 h-5 text-green-500 dark:text-green-400 flex-shrink-0" />
                       )}
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-medium text-gray-900 truncate">{block.name}</h3>
-                        <p className="text-sm text-gray-500">Sheet: {block.sheetName}</p>
+                        <h3 className="font-medium text-foreground truncate">{block.name}</h3>
+                        <p className="text-sm text-muted-foreground">Sheet: {block.sheetName}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge variant="secondary" className="text-xs">
                         {block.type === "list" ? "List" : "Table"}
                       </Badge>
-                      <span className="text-xs text-gray-400 min-w-0">
+                      <span className="text-xs text-muted-foreground min-w-0">
                         {getBlockItemCount(block)} {block.type === "list" ? "fields" : "columns"}
                       </span>
                       <div className="flex items-center space-x-1">
@@ -332,7 +332,7 @@ export function MainContent() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="w-8 h-8 p-0 text-red-600 hover:text-red-700"
+                          className="w-8 h-8 p-0 text-red-600 dark:text-red-400 hover:text-red-700 hover:dark:text-red-300"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleDeleteBlock(block.id)
@@ -400,7 +400,7 @@ export function MainContent() {
         <div className="flex-shrink-0 flex items-center justify-between p-6 border-b">
           <div>
             <h2 className="text-2xl font-bold">{activeSheet.name}</h2>
-            <p className="text-gray-500">
+            <p className="text-muted-foreground">
               Workbook: {activeWorkbook.name} • {activeSheet.blocks.length} blocks
             </p>
           </div>
@@ -455,8 +455,8 @@ export function MainContent() {
         <div className="flex-1 overflow-y-auto p-6">
           {activeSheet.blocks.length === 0 ? (
             <div className="text-center py-12">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No blocks yet</h3>
-              <p className="text-gray-500 mb-4">Add your first block to start building your schema</p>
+              <h3 className="text-lg font-medium text-foreground mb-2">No blocks yet</h3>
+              <p className="text-muted-foreground mb-4">Add your first block to start building your schema</p>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
@@ -477,30 +477,30 @@ export function MainContent() {
                   onDragLeave={handleBlockDragLeave}
                   onDrop={(e) => handleBlockDrop(e, block.id)}
                   onDragEnd={handleBlockDragEnd}
-                  className={`border rounded-lg p-4 hover:shadow-md transition-all cursor-pointer bg-white ${
+                  className={`border rounded-lg p-4 hover:shadow-md transition-all cursor-pointer bg-background ${
                     draggedBlock === block.id ? "opacity-50 scale-95" : ""
                   } ${
                     dragOverBlock === block.id && draggedBlock !== block.id
-                      ? "border-2 border-dashed border-blue-400 bg-blue-50"
+                      ? "border-2 border-dashed border-blue-400 bg-blue-50 dark:bg-blue-950/40"
                       : ""
                   }`}
                   onClick={() => setActiveBlock(block.id)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <GripVertical className="w-5 h-5 text-gray-400 cursor-grab active:cursor-grabbing flex-shrink-0" />
+                      <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab active:cursor-grabbing flex-shrink-0" />
                       {block.type === "list" ? (
-                        <List className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                        <List className="w-5 h-5 text-blue-500 dark:text-blue-400 flex-shrink-0" />
                       ) : (
-                        <Table className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <Table className="w-5 h-5 text-green-500 dark:text-green-400 flex-shrink-0" />
                       )}
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-medium text-gray-900 truncate">{block.name}</h3>
+                        <h3 className="font-medium text-foreground truncate">{block.name}</h3>
                         <div className="flex items-center space-x-2 mt-1">
                           <Badge variant="secondary" className="text-xs">
                             {block.type === "list" ? "List" : "Table"}
                           </Badge>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-muted-foreground">
                             {getBlockItemCount(block)} {block.type === "list" ? "fields" : "columns"}
                           </span>
                         </div>
@@ -533,7 +533,7 @@ export function MainContent() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="w-8 h-8 p-0 text-red-600 hover:text-red-700"
+                        className="w-8 h-8 p-0 text-red-600 dark:text-red-400 hover:text-red-700 hover:dark:text-red-300"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleDeleteBlock(block.id)
@@ -596,15 +596,15 @@ export function MainContent() {
   return (
     <div className="h-full flex flex-col">
       {/* Simple Header */}
-      <div className="flex-shrink-0 bg-white border-b">
+      <div className="flex-shrink-0 bg-background border-b">
         <div className="flex items-center justify-between p-6">
           <div>
             <h2 className="text-2xl font-bold flex items-center space-x-2">
               {activeBlock.type === "list" ? <List className="w-6 h-6" /> : <Table className="w-6 h-6" />}
               <span>{activeBlock.name}</span>
-              <span className="text-lg text-gray-500 capitalize font-normal">({activeBlock.type})</span>
+              <span className="text-lg text-muted-foreground capitalize font-normal">({activeBlock.type})</span>
             </h2>
-            <p className="text-gray-500">
+            <p className="text-muted-foreground">
               Sheet: {activeSheet.name} • Workbook: {activeWorkbook.name}
             </p>
           </div>

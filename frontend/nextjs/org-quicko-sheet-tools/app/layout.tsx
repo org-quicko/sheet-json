@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { SITE_URL } from '@/lib/site'
+import { ThemeProvider } from '@/components/theme-provider'
 
 const title = 'Sheet-JSON Schema Builder & Visualizer | Sheet Tools'
 const description =
@@ -48,8 +49,13 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    // next-themes sets the theme class on <html> before hydration.
+    <html lang="en" suppressHydrationWarning>
+      <body className="bg-background text-foreground">
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   )
 }
