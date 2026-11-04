@@ -1,6 +1,6 @@
 {
 	"name": "@org-quicko/sheet",
-	"version": "1.0.6",
+	"version": "2.0.0",
 	"description": "TypeScript toolkit featuring spreadsheet-like data structure & related utilities for modern internet applications.",
 	"author": "Quicko <developer@quicko.org.in>",
 	"main": "dist/cjs/index.cjs",
@@ -11,9 +11,10 @@
 		"clean": "rm -rf dist && npm cache clean --force",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
-		"test": "jest",
+		"test": "vitest run",
 		"prebuild": "npm run clean && npm run lint",
-		"build": "rollup -c"
+		"build": "rollup -c",
+		"typecheck": "node node_modules/typescript-native/bin/tsc --noEmit"
 	},
 	"license": "ISC",
 	"files": [
@@ -53,29 +54,29 @@
 		"node": ">=8.0.0"
 	},
 	"dependencies": {
-		"@org-quicko/core": "^1.1.0",
+		"@org-quicko/core": "^2.0.7",
 		"class-transformer": "^0.5.1",
-		"class-validator": "^0.14.0",
+		"class-validator": "^0.15.1",
 		"reflect-metadata": "^0.2.2",
-		"tslib": "^2.8.1",
-		"xlsx": "https://cdn.sheetjs.com/xlsx-0.20.1/xlsx-0.20.1.tgz"
+		"tslib": "^2.9.1",
+		"xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
 	},
 	"devDependencies": {
-		"@rollup/plugin-commonjs": "^28.0.3",
-		"@rollup/plugin-node-resolve": "^16.0.1",
-		"@rollup/plugin-typescript": "^12.1.2",
-		"@types/node": "^22.7.0",
-		"@typescript-eslint/eslint-plugin": "^8.33.1",
-		"@typescript-eslint/parser": "^8.33.1",
-		"esbuild-plugin-eslint": "^0.3.7",
-		"eslint": "^9.28.0",
-		"eslint-config-prettier": "^10.1.5",
-		"eslint-import-resolver-typescript": "^3.7.0",
-		"glob": "^11.0.2",
-    "jest": "^30.0.5",
-		"rollup": "^4.40.2",
-		"rollup-plugin-dts": "^6.2.1",
+		"@rollup/plugin-commonjs": "^29.0.3",
+		"@rollup/plugin-node-resolve": "^16.0.3",
+		"@rollup/plugin-typescript": "^12.3.1",
+		"@types/node": "^26.6.6",
+		"@typescript-eslint/eslint-plugin": "^8.72.1",
+		"@typescript-eslint/parser": "^8.72.1",
+		"eslint": "^10.14.0",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-import-resolver-typescript": "^4.4.5",
+		"glob": "^14.0.3",
+		"rollup": "^4.67.4",
+		"rollup-plugin-dts": "^6.5.1",
 		"ts-node": "^10.9.2",
-		"typescript": "^5.6.2"
+		"typescript": "^6.0.3",
+		"typescript-native": "npm:typescript@^7.0.2",
+		"vitest": "^5.1.0"
 	}
 }

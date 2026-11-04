@@ -13,7 +13,7 @@ npm install @org-quicko/sheet-generator
 ```
 
 ##### Prerequisites
-- Node.js: v20.0.0 or higher
+- Node.js: v22.12.0 or higher
 
 ### Configuration and setup
 

@@ -15,10 +15,9 @@
 		/* Module Resolution Options */
 		"module": "esnext",
 		"moduleResolution": "bundler",
-		"baseUrl": "./" /* Base directory to resolve non-absolute module names. */,
 		"paths": {
-			"*": ["node_modules/*", "environment/*"]
-		} /* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */,
+			"*": ["./node_modules/*", "./environment/*"]
+		} /* A series of entries which re-map imports to lookup locations relative to this file. */,
 
 		"esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */,
 
