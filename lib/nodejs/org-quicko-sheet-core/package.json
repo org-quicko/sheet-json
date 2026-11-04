@@ -1,6 +1,6 @@
 {
 	"name": "@org-quicko/sheet",
-	"version": "1.0.6",
+	"version": "2.0.0",
 	"description": "TypeScript toolkit featuring spreadsheet-like data structure & related utilities for modern internet applications.",
 	"author": "Quicko <developer@quicko.org.in>",
 	"main": "dist/cjs/index.cjs",
@@ -72,7 +72,7 @@
 		"eslint-config-prettier": "^10.1.5",
 		"eslint-import-resolver-typescript": "^3.7.0",
 		"glob": "^11.0.2",
-    "jest": "^30.0.5",
+		"jest": "^30.0.5",
 		"rollup": "^4.40.2",
 		"rollup-plugin-dts": "^6.2.1",
 		"ts-node": "^10.9.2",
