@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "@jest/globals";
+import { beforeEach, describe, expect, it } from "vitest";
 import { JSONValue } from "@org-quicko/core";
 import { Item } from "../../src/beans/Item";
 import { List } from "../../src/beans/List";

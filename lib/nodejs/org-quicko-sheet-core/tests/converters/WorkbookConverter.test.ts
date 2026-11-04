@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it } from "vitest";
 import { ConverterException, JSONArray } from "@org-quicko/core";
 import * as XLSX from "xlsx";
 import { Item } from "../../src/beans/Item";

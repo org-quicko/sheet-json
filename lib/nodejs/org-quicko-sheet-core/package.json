@@ -11,7 +11,7 @@
 		"clean": "rm -rf dist && npm cache clean --force",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
-		"test": "jest",
+		"test": "vitest run",
 		"prebuild": "npm run clean && npm run lint",
 		"build": "rollup -c",
 		"typecheck": "node node_modules/typescript-native/bin/tsc --noEmit"
@@ -72,12 +72,11 @@
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-import-resolver-typescript": "^4.4.5",
 		"glob": "^14.0.3",
-		"jest": "^30.5.2",
 		"rollup": "^4.67.4",
 		"rollup-plugin-dts": "^6.5.1",
-		"ts-jest": "^29.4.15",
 		"ts-node": "^10.9.2",
 		"typescript": "^6.0.3",
-		"typescript-native": "npm:typescript@^7.0.2"
+		"typescript-native": "npm:typescript@^7.0.2",
+		"vitest": "^5.1.0"
 	}
 }
