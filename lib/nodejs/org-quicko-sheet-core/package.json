@@ -13,7 +13,8 @@
 		"lint:fix": "eslint . --fix",
 		"test": "jest",
 		"prebuild": "npm run clean && npm run lint",
-		"build": "rollup -c"
+		"build": "rollup -c",
+		"typecheck": "node node_modules/typescript-native/bin/tsc --noEmit"
 	},
 	"license": "ISC",
 	"files": [
@@ -75,6 +76,7 @@
 		"rollup": "^4.67.4",
 		"rollup-plugin-dts": "^6.5.1",
 		"ts-node": "^10.9.2",
-		"typescript": "^6.0.3"
+		"typescript": "^6.0.3",
+		"typescript-native": "npm:typescript@^7.0.2"
 	}
 }
