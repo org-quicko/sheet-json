@@ -1,6 +1,6 @@
 {
 	"name": "@org-quicko/sheet-generator",
-	"version": "1.0.3",
+	"version": "2.0.0",
 	"description": "Utility to generate TypeScript classes and schemas from JSON or Excel files.",
 	"author": "Quicko <developer@quicko.org.in>",
 	"main": "dist/index.cjs",
@@ -14,9 +14,11 @@
 	"scripts": {
 		"clean": "npm cache clean --force",
 		"lint": "eslint .",
-    	"lint:fix": "eslint . --fix",
+		"lint:fix": "eslint . --fix",
 		"prebuild": "rm -rf dist && eslint .",
-		"build": "rollup -c"
+		"build": "rollup -c",
+		"test": "vitest run",
+		"typecheck": "node node_modules/typescript-native/bin/tsc --noEmit"
 	},
 	"license": "ISC",
 	"files": [
@@ -29,33 +31,33 @@
 		"lib": "./dist"
 	},
 	"engines": {
-		"node": ">=8.0.0"
+		"node": ">=22.12.0"
 	},
 	"dependencies": {
-		"@org-quicko/core": "^1.1.0",
-		"@org-quicko/sheet": "^1.0.1",
+		"@org-quicko/core": "^2.0.7",
+		"@org-quicko/sheet": "^2.0.0",
 		"class-transformer": "^0.5.1",
-		"class-validator": "^0.14.0",
-		"commander": "^13.0.0",
-		"g": "^2.0.1",
+		"class-validator": "^0.15.1",
+		"commander": "^15.0.0",
 		"reflect-metadata": "^0.2.2",
-		"xlsx": "https://cdn.sheetjs.com/xlsx-0.20.1/xlsx-0.20.1.tgz"
+		"xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
 	},
 	"devDependencies": {
-		"@eslint/js": "^9.26.0",
-		"@rollup/plugin-commonjs": "^28.0.3",
-		"@rollup/plugin-node-resolve": "^16.0.1",
-		"@rollup/plugin-typescript": "^12.1.2",
-		"@types/node": "^22.7.0",
-		"@typescript-eslint/eslint-plugin": "^8.33.1",
-		"@typescript-eslint/parser": "^8.33.1",
-		"esbuild-plugin-eslint": "^0.3.7",
-		"eslint": "^9.28.0",
-		"eslint-config-prettier": "^10.1.5",
-		"eslint-import-resolver-typescript": "^3.7.0",
-		"glob": "^11.0.2",
-		"rollup": "^4.40.2",
+		"@eslint/js": "^10.0.1",
+		"@rollup/plugin-commonjs": "^29.0.3",
+		"@rollup/plugin-node-resolve": "^16.0.3",
+		"@rollup/plugin-typescript": "^12.3.1",
+		"@types/node": "^26.6.6",
+		"@typescript-eslint/eslint-plugin": "^8.72.1",
+		"@typescript-eslint/parser": "^8.72.1",
+		"eslint": "^10.14.0",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-import-resolver-typescript": "^4.4.5",
+		"glob": "^14.0.3",
+		"rollup": "^4.67.4",
 		"ts-node": "^10.9.2",
-		"typescript": "^5.6.2"
+		"typescript": "^6.0.3",
+		"typescript-native": "npm:typescript@^7.0.2",
+		"vitest": "^5.1.0"
 	}
 }
