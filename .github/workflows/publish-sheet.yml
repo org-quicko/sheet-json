@@ -5,14 +5,17 @@ on:
     branches:
       - main
     paths:
-      - 'src/**'
-      - 'package.json'
+      - 'lib/nodejs/org-quicko-sheet-core/src/**'
+      - 'lib/nodejs/org-quicko-sheet-core/package.json'
   workflow_dispatch:
 
 jobs:
   publish-sheet:
     name: Build & Publish @org-quicko/sheet
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lib/nodejs/org-quicko-sheet-core
 
     steps:
       - name: Checkout repository
@@ -25,7 +28,13 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
 
       - name: Build
         run: npm run build

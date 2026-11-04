@@ -14,6 +14,12 @@ export class WorkbookConverter {
 
 	static isoFormatRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
 
+	/**
+	 * Time zone used to read and print dates. `@org-quicko/core` 2.x defaults
+	 * `DateUtil` to UTC, so the zone used by 1.x is passed explicitly.
+	 */
+	static TIME_ZONE = "Asia/Kolkata";
+
 	toWorkbook = <T extends Workbook>(fileBuffer: Buffer, Class: new () => T): T => {
 		try {
 			const workbook = XLSX.read(fileBuffer, { raw: true });
@@ -159,7 +165,7 @@ export class WorkbookConverter {
 									rowObject.push(cell);
 								}
 							} else {
-								rowObject.push(cell != null ? (DateUtil.isValidDate(cell.trim(), "MM/dd/yyyy") ? DateUtil.readDate(cell.trim(), "MM/dd/yyyy").getTime() : cell) : cell);
+								rowObject.push(cell != null ? (DateUtil.isValidDate(cell.trim(), "MM/dd/yyyy", WorkbookConverter.TIME_ZONE) ? DateUtil.readDate(cell.trim(), "MM/dd/yyyy", WorkbookConverter.TIME_ZONE).getTime() : cell) : cell);
 							}
 						}
 						else {
@@ -272,7 +278,7 @@ export class WorkbookConverter {
 			if (typeof key === "string" && key.includes('epoch') && typeof (data as Item)?.getValue() === 'number') {
 				// Convert epoch time to ISO format
 				const date = DateUtil.fromMillis((data as Item)?.getValue() as number);
-				const isoDate = DateUtil.printDate(date);
+				const isoDate = DateUtil.printDate(date, WorkbookConverter.TIME_ZONE);
 
 				XLSX.utils.sheet_add_aoa(sheet, [[(data as Item)?.getKey(), isoDate]], { origin: { r: row, c: 0 } });
 			} else {
@@ -302,7 +308,7 @@ export class WorkbookConverter {
 					if (typeof value === 'number') {
 						// Convert epoch time to ISO formatz
 						const date = DateUtil.fromMillis(value);
-						return DateUtil.printDate(date, "yyyy-MM-dd'T'HH:mm:ssXXX");
+						return DateUtil.printDate(date, WorkbookConverter.TIME_ZONE, "yyyy-MM-dd'T'HH:mm:ssXXX");
 					}
 				}
 				return value;
