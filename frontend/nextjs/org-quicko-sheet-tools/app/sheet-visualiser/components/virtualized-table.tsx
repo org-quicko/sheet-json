@@ -380,16 +380,16 @@ export function VirtualizedTable({
   if (!currentBlock) return null
 
   return (
-    <div className="h-full bg-white border border-gray-200 rounded-lg overflow-hidden flex flex-col">
+    <div className="h-full bg-background border border-border rounded-lg overflow-hidden flex flex-col">
       {!isListBlock && hasActiveFiltersOrSort && (
-        <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-gray-200 bg-gray-50 text-xs text-gray-600 flex-shrink-0">
+        <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-border bg-muted/50 text-xs text-muted-foreground flex-shrink-0">
           <span>
             Showing {filteredIndices.length} of {tableData.rows.length} rows
           </span>
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 px-2 text-xs text-gray-600 hover:text-gray-900"
+            className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
             onClick={clearAllFiltersAndSort}
           >
             <X data-icon="inline-start" />
@@ -413,7 +413,7 @@ export function VirtualizedTable({
         >
           {/* Header Row */}
           <div
-            className="sticky top-0 z-20 bg-gray-100 border-b-2 border-gray-300 shadow-sm"
+            className="sticky top-0 z-20 bg-muted border-b-2 border-border shadow-sm"
             style={{
               height: HEADER_HEIGHT,
               width: `${columnVirtualizer.getTotalSize()}px`,
@@ -438,7 +438,7 @@ export function VirtualizedTable({
               return (
                 <div
                   key={virtualColumn.key}
-                  className="absolute top-0 flex items-center px-3 font-semibold text-sm bg-gray-100 border-r border-gray-300 group"
+                  className="absolute top-0 flex items-center px-3 font-semibold text-sm bg-muted border-r border-border group"
                   style={{
                     left: `${virtualColumn.start}px`,
                     width: `${virtualColumn.size}px`,
@@ -447,7 +447,7 @@ export function VirtualizedTable({
                 >
                   {isListBlock ? (
                     <div className="flex items-center gap-2 truncate flex-1">
-                      <span className="truncate font-medium text-gray-800">{headerText}</span>
+                      <span className="truncate font-medium text-foreground">{headerText}</span>
                     </div>
                   ) : (
                     <button
@@ -459,11 +459,11 @@ export function VirtualizedTable({
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <div className="flex items-center gap-2 truncate flex-1 min-w-0">
-                              <span className="truncate font-medium text-gray-800">{headerText}</span>
+                              <span className="truncate font-medium text-foreground">{headerText}</span>
                               {fieldSchema && (
                                 <Badge
                                   variant="secondary"
-                                  className="text-xs bg-blue-100 text-blue-800 border-blue-200"
+                                  className="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800"
                                 >
                                   {Array.isArray(fieldSchema.type) ? fieldSchema.type.join(" | ") : fieldSchema.type}
                                 </Badge>
@@ -495,12 +495,12 @@ export function VirtualizedTable({
                       </TooltipProvider>
                       {isSortedCol ? (
                         sortConfig?.direction === "asc" ? (
-                          <ArrowUp className="size-3.5 text-blue-600 flex-shrink-0" />
+                          <ArrowUp className="size-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                         ) : (
-                          <ArrowDown className="size-3.5 text-blue-600 flex-shrink-0" />
+                          <ArrowDown className="size-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                         )
                       ) : (
-                        <ArrowUpDown className="size-3.5 text-gray-400 opacity-0 group-hover:opacity-100 flex-shrink-0" />
+                        <ArrowUpDown className="size-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 flex-shrink-0" />
                       )}
                     </button>
                   )}
@@ -520,13 +520,13 @@ export function VirtualizedTable({
                       <PopoverTrigger asChild>
                         <button
                           type="button"
-                          className={`ml-1 p-1 rounded flex-shrink-0 hover:bg-gray-200 ${
-                            isFilteredCol ? "text-blue-600" : "text-gray-400"
+                          className={`ml-1 p-1 rounded flex-shrink-0 hover:bg-muted ${
+                            isFilteredCol ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"
                           }`}
                           onClick={(e) => e.stopPropagation()}
                           aria-label={`Filter ${headerText}`}
                         >
-                          <Filter className={`size-3.5 ${isFilteredCol ? "fill-blue-100" : ""}`} />
+                          <Filter className={`size-3.5 ${isFilteredCol ? "fill-blue-100 dark:fill-blue-900/40" : ""}`} />
                         </button>
                       </PopoverTrigger>
                       <PopoverContent align="start" className="w-64 p-3">
@@ -622,10 +622,10 @@ export function VirtualizedTable({
                   return (
                     <div
                       key={virtualColumn.key}
-                      className={`absolute top-0 border-r border-b border-gray-200 px-3 py-2 text-sm cursor-pointer transition-colors ${
-                        isSelected ? "bg-blue-50 border-blue-300 ring-1 ring-blue-300" : "hover:bg-gray-50"
-                      } ${validationError ? "bg-red-50 border-red-200" : ""} ${
-                        displayIndex % 2 === 0 ? "bg-white" : "bg-gray-25"
+                      className={`absolute top-0 border-r border-b border-border px-3 py-2 text-sm cursor-pointer transition-colors ${
+                        isSelected ? "bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 ring-1 ring-blue-300" : "hover:bg-muted/50"
+                      } ${validationError ? "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800" : ""} ${
+                        displayIndex % 2 === 0 ? "bg-background" : "bg-muted/30"
                       }`}
                       style={{
                         left: `${virtualColumn.start}px`,
@@ -661,7 +661,7 @@ export function VirtualizedTable({
                                   {fieldSchema && isListBlock && colIndex === 1 && (
                                     <Badge
                                       variant="outline"
-                                      className="text-xs bg-green-50 text-green-700 border-green-200 flex-shrink-0"
+                                      className="text-xs bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800 flex-shrink-0"
                                     >
                                       {Array.isArray(fieldSchema.type)
                                         ? fieldSchema.type.join(" | ")
@@ -710,7 +710,7 @@ export function VirtualizedTable({
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger>
-                                  <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                  <AlertCircle className="w-4 h-4 text-red-500 dark:text-red-400 flex-shrink-0" />
                                 </TooltipTrigger>
                                 <TooltipContent>
                                   <p className="text-xs">{validationError.message}</p>
@@ -766,22 +766,22 @@ function FilterPopoverContent({
         className="h-8 text-sm"
       />
       <div className="flex items-center justify-between text-xs">
-        <button type="button" className="text-blue-600 hover:underline" onClick={() => onSelectAll(allValues)}>
+        <button type="button" className="text-blue-600 dark:text-blue-400 hover:underline" onClick={() => onSelectAll(allValues)}>
           Select all
         </button>
-        <button type="button" className="text-blue-600 hover:underline" onClick={onClearAll}>
+        <button type="button" className="text-blue-600 dark:text-blue-400 hover:underline" onClick={onClearAll}>
           Clear
         </button>
       </div>
-      <div className="max-h-64 overflow-y-auto flex flex-col gap-1 border border-gray-100 rounded-md p-2">
-        {visibleValues.length === 0 && <div className="text-xs text-gray-400 px-1 py-2">No values found</div>}
+      <div className="max-h-64 overflow-y-auto flex flex-col gap-1 border border-border rounded-md p-2">
+        {visibleValues.length === 0 && <div className="text-xs text-muted-foreground px-1 py-2">No values found</div>}
         {visibleValues.map((value) => {
           const checkboxId = `filter-value-${value}`
           return (
             <label
               key={value}
               htmlFor={checkboxId}
-              className="flex items-center gap-2 text-sm px-1 py-1 rounded hover:bg-gray-50 cursor-pointer"
+              className="flex items-center gap-2 text-sm px-1 py-1 rounded hover:bg-muted/50 cursor-pointer"
             >
               <Checkbox
                 id={checkboxId}

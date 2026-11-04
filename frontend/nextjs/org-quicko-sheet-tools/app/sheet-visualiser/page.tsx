@@ -18,6 +18,7 @@ import type { WorkbookData, SheetSchema, ValidationError, ColumnWidth } from "./
 import { VirtualizedTable } from "./components/virtualized-table"
 import { validateAllCells } from "./utils/validation"
 import { AddDataDialog } from "./components/add-data-dialog"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 function SheetVisualizerContent() {
   const router = useRouter()
@@ -366,20 +367,21 @@ function SheetVisualizerContent() {
   const blocksWithErrors = new Set(validationErrors.map((error: any) => `${error.sheetIndex}-${error.blockIndex}`))
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col">
+    <div className="h-screen bg-muted/50 flex flex-col">
       {/* Sticky Header */}
-      <header className="bg-white border-b flex-shrink-0 z-10">
+      <header className="bg-background border-b flex-shrink-0 z-10">
         <div className="mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Link href="/" className="flex items-center space-x-2 hover:opacity-80">
-                <FileSpreadsheet className="w-6 h-6 text-blue-600" />
-                <span className="text-lg font-semibold text-gray-900">Sheet Tools</span>
+                <FileSpreadsheet className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                <span className="text-lg font-semibold text-foreground">Sheet Tools</span>
               </Link>
-              <span className="text-gray-400">/</span>
-              <span className="text-gray-600">Sheet Visualizer</span>
+              <span className="text-muted-foreground">/</span>
+              <span className="text-muted-foreground">Sheet Visualizer</span>
             </div>
             <div className="flex items-center space-x-2">
+              <ThemeToggle />
               <Link href="/sheet-schema-builder">
                 <Button variant="outline">
                   <Settings className="w-4 h-4 mr-2" />
@@ -393,9 +395,9 @@ function SheetVisualizerContent() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sticky Sidebar */}
-        <div className="w-96 bg-gray-50 border-r border-gray-200 flex flex-col flex-shrink-0">
+        <div className="w-96 bg-muted/50 border-r border-border flex flex-col flex-shrink-0">
           {/* Sidebar Header */}
-          <div className="p-4 border-b border-gray-200 space-y-4 flex-shrink-0">
+          <div className="p-4 border-b border-border space-y-4 flex-shrink-0">
             <div className="flex items-center justify-between">
               {/* Import Buttons */}
               <div className="flex gap-4">
@@ -423,7 +425,7 @@ function SheetVisualizerContent() {
                         <div className="space-y-4">
                           <div>
                             <Label className="text-base font-medium">Upload Data File</Label>
-                            <p className="text-sm text-gray-500 mb-3">Upload your sheet data JSON file</p>
+                            <p className="text-sm text-muted-foreground mb-3">Upload your sheet data JSON file</p>
                             <input
                               ref={fileInputRef}
                               type="file"
@@ -438,7 +440,7 @@ function SheetVisualizerContent() {
                               disabled={isLoading}
                             >
                               <div className="flex flex-col items-center">
-                                <File className="w-8 h-8 mb-2 text-gray-400" />
+                                <File className="w-8 h-8 mb-2 text-muted-foreground" />
                                 <span>{isLoading ? "Loading..." : "Click to choose JSON file"}</span>
                               </div>
                             </Button>
@@ -477,7 +479,7 @@ function SheetVisualizerContent() {
                               value={dataUrlInput}
                               onChange={(e) => setDataUrlInput(e.target.value)}
                             />
-                            <p className="text-sm text-gray-500 mt-1">Enter a URL to fetch the JSON data from</p>
+                            <p className="text-sm text-muted-foreground mt-1">Enter a URL to fetch the JSON data from</p>
                           </div>
                           <div className="flex justify-end space-x-2">
                             <Button
@@ -524,7 +526,7 @@ function SheetVisualizerContent() {
                         <div className="space-y-4">
                           <div>
                             <Label className="text-base font-medium">Upload Schema File</Label>
-                            <p className="text-sm text-gray-500 mb-3">Upload your JSON schema file</p>
+                            <p className="text-sm text-muted-foreground mb-3">Upload your JSON schema file</p>
                             <input
                               ref={schemaFileInputRef}
                               type="file"
@@ -539,7 +541,7 @@ function SheetVisualizerContent() {
                               disabled={isLoading}
                             >
                               <div className="flex flex-col items-center">
-                                <FileSpreadsheet className="w-8 h-8 mb-2 text-gray-400" />
+                                <FileSpreadsheet className="w-8 h-8 mb-2 text-muted-foreground" />
                                 <span>{isLoading ? "Loading..." : "Click to choose Schema file"}</span>
                               </div>
                             </Button>
@@ -578,7 +580,7 @@ function SheetVisualizerContent() {
                               value={schemaUrlInput}
                               onChange={(e) => setSchemaUrlInput(e.target.value)}
                             />
-                            <p className="text-sm text-gray-500 mt-1">Enter a URL to fetch the JSON schema from</p>
+                            <p className="text-sm text-muted-foreground mt-1">Enter a URL to fetch the JSON schema from</p>
                           </div>
                           <div className="flex justify-end space-x-2">
                             <Button
@@ -643,18 +645,18 @@ function SheetVisualizerContent() {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       {workbookData.sheets.length} sheet(s) •{" "}
                       {workbookData.sheets.reduce((acc, sheet) => acc + sheet.blocks.length, 0)} block(s)
                     </p>
                     {validationErrors.length > 0 && (
-                      <p className="text-sm text-red-600">{validationErrors.length} validation error(s)</p>
+                      <p className="text-sm text-red-600 dark:text-red-400">{validationErrors.length} validation error(s)</p>
                     )}
                   </div>
 
                   {/* Sheets */}
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-gray-700">Sheets</h4>
+                    <h4 className="text-sm font-medium text-foreground">Sheets</h4>
                     {workbookData.sheets.map((sheet, sheetIndex) => {
                       const hasSheetErrors = sheetsWithErrors.has(sheetIndex)
 
@@ -662,9 +664,9 @@ function SheetVisualizerContent() {
                         <div key={sheetIndex} className="space-y-1">
                           <div
                             className={cn(
-                              "flex items-center justify-between p-2 rounded cursor-pointer hover:bg-gray-100",
-                              activeSheetIndex === sheetIndex && "bg-blue-100",
-                              hasSheetErrors && "bg-red-50 border border-red-200",
+                              "flex items-center justify-between p-2 rounded cursor-pointer hover:bg-muted",
+                              activeSheetIndex === sheetIndex && "bg-blue-100 dark:bg-blue-900/40",
+                              hasSheetErrors && "bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800",
                             )}
                             onClick={() => {
                               setActiveSheetIndex(sheetIndex)
@@ -682,7 +684,7 @@ function SheetVisualizerContent() {
                               )}
                               <Table className="w-3 h-3 mr-2 flex-shrink-0" />
                               <span className="text-sm truncate">{sheet.name}</span>
-                              {hasSheetErrors && <AlertCircle className="w-3 h-3 ml-1 text-red-500 flex-shrink-0" />}
+                              {hasSheetErrors && <AlertCircle className="w-3 h-3 ml-1 text-red-500 dark:text-red-400 flex-shrink-0" />}
                             </div>
                             <Badge variant="outline" className="text-xs">
                               {sheet.blocks.length}
@@ -700,11 +702,11 @@ function SheetVisualizerContent() {
                                   <div
                                     key={blockIndex}
                                     className={cn(
-                                      "flex items-center justify-between p-2 rounded cursor-pointer hover:bg-gray-50",
+                                      "flex items-center justify-between p-2 rounded cursor-pointer hover:bg-muted/50",
                                       activeSheetIndex === sheetIndex &&
                                         activeBlockIndex === blockIndex &&
-                                        "bg-blue-50 border border-blue-200",
-                                      hasBlockErrors && "bg-red-50 border border-red-200",
+                                        "bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800",
+                                      hasBlockErrors && "bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800",
                                     )}
                                     onClick={() => {
                                       setActiveSheetIndex(sheetIndex)
@@ -716,12 +718,12 @@ function SheetVisualizerContent() {
                                   >
                                     <div className="flex items-center flex-1 min-w-0">
                                       {block["@entity"] === "list" ? (
-                                        <List className="w-3 h-3 mr-2 text-gray-500 flex-shrink-0" />
+                                        <List className="w-3 h-3 mr-2 text-muted-foreground flex-shrink-0" />
                                       ) : (
-                                        <Table className="w-3 h-3 mr-2 text-gray-500 flex-shrink-0" />
+                                        <Table className="w-3 h-3 mr-2 text-muted-foreground flex-shrink-0" />
                                       )}
-                                      <span className="text-sm text-gray-700 truncate mr-2">{block.name}</span>
-                                      {hasBlockErrors && <AlertCircle className="w-3 h-3 text-red-500 flex-shrink-0" />}
+                                      <span className="text-sm text-foreground truncate mr-2">{block.name}</span>
+                                      {hasBlockErrors && <AlertCircle className="w-3 h-3 text-red-500 dark:text-red-400 flex-shrink-0" />}
                                     </div>
                                     <Badge variant="secondary" className="text-xs">
                                       {block["@entity"] === "table"
@@ -741,8 +743,8 @@ function SheetVisualizerContent() {
               </div>
             ) : (
               <div className="flex-1 flex items-center justify-center p-4">
-                <div className="text-center text-gray-500">
-                  <FileSpreadsheet className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <div className="text-center text-muted-foreground">
+                  <FileSpreadsheet className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
                   <p className="text-sm mb-3">No data imported</p>
                   <Button size="sm" variant="outline" onClick={() => setIsDataDialogOpen(true)}>
                     <Upload className="w-3 h-3 mr-1" />
@@ -759,25 +761,25 @@ function SheetVisualizerContent() {
           {workbookData && currentBlock ? (
             <>
               {/* Block Header */}
-              <div className="bg-white border-b p-4 flex-shrink-0">
+              <div className="bg-background border-b p-4 flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="flex items-center space-x-2">
                       {currentBlock["@entity"] === "list" ? (
-                        <List className="w-5 h-5 text-gray-500" />
+                        <List className="w-5 h-5 text-muted-foreground" />
                       ) : (
-                        <Table className="w-5 h-5 text-gray-500" />
+                        <Table className="w-5 h-5 text-muted-foreground" />
                       )}
-                      <h1 className="text-xl font-semibold">{currentBlock.name}</h1>
+                      <h2 className="text-xl font-semibold">{currentBlock.name}</h2>
                       <Badge variant="outline">{currentBlock["@entity"]}</Badge>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       {currentSheet?.name} •{" "}
                       {currentBlock["@entity"] === "table"
                         ? `${currentBlock.rows?.length || 0} rows, ${currentBlock.header?.length || 0} columns`
                         : `${currentBlock.items?.length || 0} items`}
                       {currentBlockErrors.length > 0 && (
-                        <span className="ml-2 text-red-600">• {currentBlockErrors.length} error(s)</span>
+                        <span className="ml-2 text-red-600 dark:text-red-400">• {currentBlockErrors.length} error(s)</span>
                       )}
                     </p>
                   </div>
@@ -935,10 +937,10 @@ function SheetVisualizerContent() {
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center">
-              <div className="text-center text-gray-500">
-                <FileSpreadsheet className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+              <div className="text-center text-muted-foreground">
+                <FileSpreadsheet className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
                 <h2 className="text-xl font-semibold mb-2">Ready to Import Your Data</h2>
-                <p className="text-gray-600 mb-4">Upload your sheet to begin exploring, visualizing, and editing your data.</p>
+                <p className="text-muted-foreground mb-4">Upload your sheet to begin exploring, visualizing, and editing your data.</p>
                 <Button onClick={() => setIsDataDialogOpen(true)}>
                   <Upload className="w-4 h-4 mr-2" />
                   Import Data

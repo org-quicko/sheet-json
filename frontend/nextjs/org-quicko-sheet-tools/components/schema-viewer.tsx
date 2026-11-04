@@ -94,11 +94,11 @@ export function SchemaViewer() {
       </CardHeader>
       <CardContent>
         {isVisible && schema ? (
-          <pre className="bg-gray-100 p-4 rounded text-xs overflow-auto max-h-96">
+          <pre className="bg-muted p-4 rounded text-xs overflow-auto max-h-96">
             {JSON.stringify(schema, null, 2)}
           </pre>
         ) : (
-          <div className="text-center text-gray-500 py-8">
+          <div className="text-center text-muted-foreground py-8">
             {!schema ? "Select a workbook to view schema" : 'Click "Show" to view schema'}
           </div>
         )}

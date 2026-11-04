@@ -590,7 +590,7 @@ export function Sidebar() {
 
   return (
     <div className="relative h-full flex-shrink-0" style={{ width: sidebarWidth }}>
-      <div className="bg-gray-50 border-r border-gray-200 h-full flex flex-col overflow-hidden">
+      <div className="bg-muted/50 border-r border-border h-full flex flex-col overflow-hidden">
       {isImportLoading &&
         typeof document !== "undefined" &&
         createPortal(
@@ -600,7 +600,7 @@ export function Sidebar() {
           document.body,
         )}
       {/* Header - Fixed */}
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 space-y-4">
+      <div className="flex-shrink-0 p-4 border-b border-border space-y-4">
         {/* Data Model Section */}
         <div className="space-y-3">
           <div className="flex items-center space-x-2">
@@ -690,7 +690,7 @@ export function Sidebar() {
                   {schema ? (
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                           Workbook: <span className="font-medium">{schema.properties.name.enum[0]}</span>
                         </p>
                         <div className="flex space-x-2">
@@ -714,13 +714,13 @@ export function Sidebar() {
                         </div>
                       </div>
                       <div className="border rounded-lg">
-                        <pre className="bg-gray-50 p-4 rounded text-sm overflow-auto max-h-96 whitespace-pre-wrap">
+                        <pre className="bg-muted/50 p-4 rounded text-sm overflow-auto max-h-96 whitespace-pre-wrap">
                           {JSON.stringify(schema, null, 2)}
                         </pre>
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center text-gray-500 py-8">
+                    <div className="text-center text-muted-foreground py-8">
                       <p>No schema available. Create some blocks to generate a schema.</p>
                     </div>
                   )}
@@ -764,7 +764,7 @@ export function Sidebar() {
                   <DialogTitle>Delete Workbook</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Are you sure you want to delete the workbook "{activeWorkbook?.name}"? This action cannot be undone.
                   </p>
                   <div className="flex justify-end space-x-2">
@@ -786,7 +786,7 @@ export function Sidebar() {
                   <DialogTitle>Delete Sheet</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Are you sure you want to delete the sheet "{deletingSheet?.sheetName}"? This action cannot be
                     undone.
                   </p>
@@ -815,7 +815,7 @@ export function Sidebar() {
                   <DialogTitle>Delete Block</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Are you sure you want to delete the block "{deletingBlock?.blockName}"? This action cannot be
                     undone.
                   </p>
@@ -868,7 +868,7 @@ export function Sidebar() {
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
-                <h3 className="text-sm font-medium text-gray-700">Sheets</h3>
+                <h3 className="text-sm font-medium text-foreground">Sheets</h3>
               </div>
               <Dialog open={isSheetDialogOpen} onOpenChange={setIsSheetDialogOpen}>
                 <DialogTrigger asChild>
@@ -906,10 +906,10 @@ export function Sidebar() {
                     onDrop={(e) => handleSheetDrop(e, sheet.id)}
                     onDragEnd={handleSheetDragEnd}
                     className={cn(
-                      "flex items-center justify-between p-2 rounded cursor-pointer hover:bg-gray-100 transition-colors",
-                      activeSheetId === sheet.id && "bg-blue-100",
+                      "flex items-center justify-between p-2 rounded cursor-pointer hover:bg-muted transition-colors",
+                      activeSheetId === sheet.id && "bg-blue-100 dark:bg-blue-900/40",
                       draggedSheet === sheet.id && "opacity-50",
-                      dragOverSheet === sheet.id && "bg-blue-50 border-2 border-blue-300 border-dashed",
+                      dragOverSheet === sheet.id && "bg-blue-50 dark:bg-blue-950/40 border-2 border-blue-300 dark:border-blue-800 border-dashed",
                     )}
                     onClick={() => {
                       if (editingSheet !== sheet.id) {
@@ -919,7 +919,7 @@ export function Sidebar() {
                     }}
                   >
                     <div className="flex items-center flex-1 min-w-0">
-                      <GripVertical className="w-3 h-3 mr-1 flex-shrink-0 text-gray-400 cursor-grab active:cursor-grabbing" />
+                      <GripVertical className="w-3 h-3 mr-1 flex-shrink-0 text-muted-foreground cursor-grab active:cursor-grabbing" />
                       {expandedSheets.has(sheet.id) ? (
                         <ChevronDown className="w-3 h-3 mr-1 flex-shrink-0" />
                       ) : (
@@ -963,7 +963,7 @@ export function Sidebar() {
                             e.stopPropagation()
                             handleDeleteSheet(activeWorkbook.id, sheet.id, sheet.name)
                           }}
-                          className="text-red-600"
+                          className="text-red-600 dark:text-red-400"
                         >
                           <Trash2 className="w-3 h-3 mr-2" />
                           Delete
@@ -1022,10 +1022,10 @@ export function Sidebar() {
                           onDrop={(e) => handleBlockDrop(e, block.id, sheet.id)}
                           onDragEnd={handleBlockDragEnd}
                           className={cn(
-                            "flex items-center justify-between p-2 rounded cursor-pointer hover:bg-gray-50 transition-colors",
-                            activeBlockId === block.id && "bg-blue-50 border border-blue-200",
+                            "flex items-center justify-between p-2 rounded cursor-pointer hover:bg-muted/50 transition-colors",
+                            activeBlockId === block.id && "bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800",
                             draggedBlock === block.id && "opacity-50",
-                            dragOverBlock === block.id && "bg-blue-50 border-2 border-blue-300 border-dashed",
+                            dragOverBlock === block.id && "bg-blue-50 dark:bg-blue-950/40 border-2 border-blue-300 dark:border-blue-800 border-dashed",
                           )}
                           onClick={() => {
                             setActiveSheet(sheet.id)
@@ -1033,13 +1033,13 @@ export function Sidebar() {
                           }}
                         >
                           <div className="flex items-center flex-1 min-w-0">
-                            <GripVertical className="w-3 h-3 mr-1 flex-shrink-0 text-gray-400 cursor-grab active:cursor-grabbing" />
+                            <GripVertical className="w-3 h-3 mr-1 flex-shrink-0 text-muted-foreground cursor-grab active:cursor-grabbing" />
                             {block.type === "list" ? (
-                              <List className="w-3 h-3 mr-2 text-gray-500 flex-shrink-0" />
+                              <List className="w-3 h-3 mr-2 text-muted-foreground flex-shrink-0" />
                             ) : (
-                              <Table className="w-3 h-3 mr-2 text-gray-500 flex-shrink-0" />
+                              <Table className="w-3 h-3 mr-2 text-muted-foreground flex-shrink-0" />
                             )}
-                            <span className="text-sm text-gray-700 truncate mr-2">{block.name}</span>
+                            <span className="text-sm text-foreground truncate mr-2">{block.name}</span>
                             <Badge variant="secondary" className="text-xs flex-shrink-0 whitespace-nowrap">
                               {getBlockItemCount(block)} {block.type === "list" ? "fields" : "cols"}
                             </Badge>
@@ -1079,7 +1079,7 @@ export function Sidebar() {
                                   e.stopPropagation()
                                   handleDeleteBlock(activeWorkbook.id, sheet.id, block.id, block.name)
                                 }}
-                                className="text-red-600"
+                                className="text-red-600 dark:text-red-400"
                               >
                                 <Trash2 className="w-3 h-3 mr-2" />
                                 Delete
@@ -1088,7 +1088,7 @@ export function Sidebar() {
                           </DropdownMenu>
                         </div>
                       ))}
-                      {sheet.blocks.length === 0 && <div className="ml-6 text-xs text-gray-400 py-1">No blocks</div>}
+                      {sheet.blocks.length === 0 && <div className="ml-6 text-xs text-muted-foreground py-1">No blocks</div>}
                     </div>
                   )}
 
@@ -1135,7 +1135,7 @@ export function Sidebar() {
               ))}
 
               {activeWorkbook.sheets.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-muted-foreground">
                   <p className="text-sm mb-3">No sheets in this workbook</p>
                   <Button
                     size="sm"
@@ -1156,8 +1156,8 @@ export function Sidebar() {
       {/* No Workbook Selected State */}
       {!activeWorkbook && (
         <div className="flex-1 flex items-center justify-center p-4">
-          <div className="text-center text-gray-500">
-            <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+          <div className="text-center text-muted-foreground">
+            <FileText className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
             <p className="text-sm mb-3">No workbook selected</p>
             <Button size="sm" variant="outline" onClick={() => setIsWorkbookDialogOpen(true)}>
               <Plus className="w-3 h-3 mr-1" />
